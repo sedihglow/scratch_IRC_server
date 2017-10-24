@@ -54,6 +54,11 @@
 #define _usrLikely(x)      __builtin_expect(!!(x), 1)
 #define _usrUnlikely(x)    __builtin_expect(!!(x), 0)
 
+/* malloc family allocation macros */
+#define CALLOC(type)             ((type*) calloc(1, sizeof(type)))
+#define CALLOC_VOID(nmemb, size) ((void*) calloc(nmemb, size))
+#define CALLOC_ARRAY(type, num)  ((type*) calloc(num, sizeof(type)))
+
 /*******************************************************************************  
  * buff is set to '\0' for nByte before read occures. 
  *  If nothing is read, buff[0] = '\0', retBytes == 0.

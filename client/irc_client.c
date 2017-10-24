@@ -26,7 +26,6 @@ void irc_client(void)
 
     /* init serv_info  */
     serv_info->domain = NET_DOMAIN;
-    serv_info->port   = SERV_PORT;
 
     /* dot to binary representation */
     if(inet_pton(serv_info->domain, SERV_ADDR, &serv_info->addr) != 1){
@@ -48,7 +47,9 @@ void irc_client(void)
     /* set socket address information for struct sockAddr_in */
     socket_info->sin_family      = NET_DOMAIN;
     socket_info->sin_addr.s_addr = serv_info->addr;
-    socket_info->sin_port        = htons(SERV_PORT); /* conv net byte order */
+
+    /* convert port to network order */
+    serv_sock->sin_port = serv_info->port = htons(SERV_PORT);
 
     /* connect_to_server() sets serv_info->sockfd */
     if(connect_to_server(serv_info) != SUCCESS){

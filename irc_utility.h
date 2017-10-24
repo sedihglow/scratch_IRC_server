@@ -32,7 +32,7 @@
 typedef struct server_info{
     in_addr_t addr;      /* network binary of server address */
     char *dot_addr;      /* dotted representation of IP address */
-    in_port_t port;      /* port used at IP address */
+    in_port_t port;      /* port used at IP address, network ordered */
     int domain;          /* AF_INET or AF_INET6 */
     int sock_type;       /* IP protocol family, socket() definitions. */
     int sockfd;          /* socket file descriptior */

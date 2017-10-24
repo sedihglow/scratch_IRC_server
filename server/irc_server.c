@@ -20,7 +20,7 @@ void irc_server(void)
     struct sockaddr_in *serv_sock;
     socklen_t serv_sock_size;
   
-    serv_info = (struct_serv_info*)malloc(sizeof(struct_serv_info));
+    serv_info = CALLOC(struct_serv_info);
     if(!serv_info){
         errExit("irc_server: malloc failure serv_info");
     }
@@ -30,7 +30,6 @@ void irc_server(void)
 
     /* init serv_info  */
     serv_info->domain = NET_DOMAIN;
-    serv_info->port   = SERV_PORT;
 
     /* dot to binary representation */
     if(inet_pton(serv_info->domain, SERV_ADDR, &serv_info->addr) != 1){
@@ -42,7 +41,7 @@ void irc_server(void)
     }
 
     /* init dot representation address */
-    serv_info->dot_addr = (char*)malloc(sizeof(char) * (SERV_LEN+1));
+    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN+1);
     if(!serv_info->dot_addr){
         errExit("irc_server: malloc failure dot_addr");
     }
@@ -52,11 +51,13 @@ void irc_server(void)
     /* set socket address information for struct sockAddr_in */
     serv_sock->sin_family      = NET_DOMAIN;
     serv_sock->sin_addr.s_addr = serv_info->addr;
-    serv_sock->sin_port        = htons(SERV_PORT); /* conv net byte order */
+
+    /* convert port to network order */
+    serv_sock->sin_port = serv_info->port = htons(SERV_PORT);
 
     /* open_connection sets serv_info->sockfd and initiates listen */
     if(open_connection(serv_info) == FAILURE){
-        errExit("irc_server: Initial connection to server failed");
+        errExit("irc_server: Initial connection to network failed");
     }
 
     /* TODO: Sending message through port for initial testing. Implementation
@@ -66,7 +67,7 @@ void irc_server(void)
      *************************************************************************/
     
     serv_sock_size = sizeof(serv_sock);
-    accept(serv_info->sockfd, (void*)serv_sock, &serv_sock_size);
+    accept(serv_info->sockfd, (void*) serv_sock, &serv_sock_size);
     
     recieve_from_client(serv_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 

@@ -36,7 +36,7 @@ clean:					# clean the directory
 						$(info -- Cleaning The Directory --)
 						rm -rf *.o serv_irc.out
 .PHONY: run
-all:					# run the program as follows
+run:					# run the program as follows
 						$(info -- Running Program --)
 						make
 						./serv_irc.out

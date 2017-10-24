@@ -16,7 +16,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define SERV_ADDR   "131.252.208.028" /* TODO: Find a reliable ip server */
+#define SERV_ADDR   "131.252.208.28"  /* TODO: Find a reliable ip server */
 #define SERV_LEN    16                /* Fits IPV4 */
 #define SERV_PORT   31000             /* port listening on server */
 #define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */

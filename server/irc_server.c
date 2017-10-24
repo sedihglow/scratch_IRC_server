@@ -32,7 +32,7 @@ void irc_server(void)
     serv_info->domain = NET_DOMAIN;
 
     /* dot to binary representation */
-    if(inet_pton(serv_info->domain, SERV_ADDR, &serv_info->addr) != 1){
+    if(inet_pton(NET_DOMAIN, SERV_ADDR, &serv_info->addr) != 1){
         if(errno){
             errExit("irc_server: inet_pton failed to convert IP to binary "
                     "network order");
@@ -71,6 +71,6 @@ void irc_server(void)
     
     recieve_from_client(serv_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 
-    printf("\n%s\n", rx);
+    printf("\nprinting result: %s\n", rx);
     /************************************************************************/
 }

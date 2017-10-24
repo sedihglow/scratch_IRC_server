@@ -8,7 +8,7 @@
 #define _CLIENT_H_
 
 #include "../irc_utility.h" /* server or client definitions and functions  */
-   
+
 /* TODO NOTE: basic layout. Nothing in stone, some of these may come from exceptions,
  * signals from other threads, etc. etc. */
 int connect_to_server(struct_serv_info *serv_info);

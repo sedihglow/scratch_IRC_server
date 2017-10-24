@@ -16,7 +16,7 @@ void irc_client(void)
     struct_serv_info *serv_info;
     struct sockaddr_in *socket_info;
   
-    serv_info = (struct_serv_info*)malloc(sizeof(struct_serv_info));
+    serv_info = CALLOC(struct_serv_info);
     if(!serv_info){
         errExit("irc_client: malloc failure serv_info");
     }
@@ -28,7 +28,7 @@ void irc_client(void)
     serv_info->domain = NET_DOMAIN;
 
     /* dot to binary representation */
-    if(inet_pton(serv_info->domain, SERV_ADDR, &serv_info->addr) != 1){
+    if(inet_pton(NET_DOMAIN, SERV_ADDR, &serv_info->addr) != 1){
         if(errno){
             errExit("irc_client: inet_pton failed to convert IP to binary "
                     "network order");
@@ -37,7 +37,7 @@ void irc_client(void)
     }
 
     /* init dot representation address */
-    serv_info->dot_addr = (char*)malloc(sizeof(char) * (SERV_LEN+1));
+    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN+1);
     if(!serv_info->dot_addr){
         errExit("irc_client: malloc failure dot_addr");
     }
@@ -49,7 +49,7 @@ void irc_client(void)
     socket_info->sin_addr.s_addr = serv_info->addr;
 
     /* convert port to network order */
-    serv_sock->sin_port = serv_info->port = htons(SERV_PORT);
+    socket_info->sin_port = serv_info->port = htons(SERV_PORT);
 
     /* connect_to_server() sets serv_info->sockfd */
     if(connect_to_server(serv_info) != SUCCESS){

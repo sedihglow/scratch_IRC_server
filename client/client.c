@@ -9,8 +9,8 @@
 int connect_to_server(struct_serv_info *serv_info)
 {
     int sockfd;
-    struct sockaddr *sock_info = (struct sockaddr*) &serv_info->socket_info;
-    socklen_t sock_info_size = sizeof(sock_info);
+    void *sock_info = (void*) &serv_info->socket_info;
+    socklen_t sock_info_size = sizeof(serv_info->socket_info);
 
     /* open socket */
     sockfd = socket(serv_info->domain, serv_info->domain, serv_info->sock_type);

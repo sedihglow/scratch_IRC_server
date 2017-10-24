@@ -5,4 +5,6 @@
  * Written by: James Ross
  ******************************************************************************/
 
+#include "server.h"
+
 void irc_server(void);

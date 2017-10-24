@@ -16,7 +16,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define SERV_ADDR   ""                /* TODO: Find a reliable ip server */
+#define SERV_ADDR   "131.252.208.028" /* TODO: Find a reliable ip server */
 #define SERV_LEN    16                /* Fits IPV4 */
 #define SERV_PORT   31000             /* port listening on server */
 #define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
@@ -46,6 +46,7 @@ typedef struct workspace_buffer{
 } struct_work_buff;
 */
 
+/* Would make use of tx and rx as a ring buffer
 typedef struct stream_io{
     char   tx[IO_BUFF];
     size_t tx_len;
@@ -53,6 +54,7 @@ typedef struct stream_io{
     char   rx[IO_BUFF];
     size_t rx_len;
 } struct_io_buff;
+*/
  
 static inline ssize_t socket_transmit(int sockfd, char *tx, 
                                       size_t len, int flags)

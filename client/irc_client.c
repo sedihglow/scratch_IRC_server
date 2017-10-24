@@ -34,8 +34,7 @@ void irc_client(void)
             errExit("irc_client: inet_pton failed to convert IP to binary "
                     "network order");
         }
-        errno = EINVAL;
-        errExit("irc_client: Invalid network address string");
+        errnumExit(EINVAL, "irc_client: Invalid network address string");
     }
 
     /* init dot representation address */

@@ -25,7 +25,9 @@ void irc_client(void)
     socket_info = &(serv_info->socket_info);
 
     /* init serv_info  */
-    serv_info->domain = NET_DOMAIN;
+    serv_info->domain    = NET_DOMAIN;
+    serv_info->pcol      = IP_PROTOCOL;
+    serv_info->sock_type = SOCK_TYPE;
 
     /* dot to binary representation */
     if(inet_pton(NET_DOMAIN, SERV_ADDR, &serv_info->addr) != 1){
@@ -37,12 +39,12 @@ void irc_client(void)
     }
 
     /* init dot representation address */
-    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN+1);
+    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN);
     if(!serv_info->dot_addr){
         errExit("irc_client: malloc failure dot_addr");
     }
 
-    strncpy(serv_info->dot_addr, SERV_ADDR, strlen(SERV_ADDR));
+    strncpy(serv_info->dot_addr, SERV_ADDR, strlen(SERV_ADDR)+1);
 
     /* set socket address information for struct sockAddr_in */
     socket_info->sin_family      = NET_DOMAIN;
@@ -52,7 +54,7 @@ void irc_client(void)
     socket_info->sin_port = serv_info->port = htons(SERV_PORT);
 
     /* connect_to_server() sets serv_info->sockfd */
-    if(connect_to_server(serv_info) != SUCCESS){
+    if(connect_to_server(serv_info) == FAILURE){
         errExit("irc_client: Initial connection to server failed");
     }
 

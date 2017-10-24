@@ -13,7 +13,7 @@ int connect_to_server(struct_serv_info *serv_info)
     socklen_t sock_info_size = sizeof(serv_info->socket_info);
 
     /* open socket */
-    sockfd = socket(serv_info->domain, serv_info->domain, serv_info->sock_type);
+    sockfd = socket(serv_info->domain, serv_info->sock_type, serv_info->pcol);
     if (_usrUnlikely(sockfd == FAILURE)){
         /* TODO: Retry to open socket until timeout */
         errMsg("connect_to_server: Failed to open the socket()");

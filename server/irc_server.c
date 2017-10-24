@@ -18,18 +18,20 @@ void irc_server(void)
 
     struct_serv_info *serv_info;
     struct sockaddr_in *serv_sock;
-    socklen_t serv_sock_size;
+    socklen_t serv_sock_size = sizeof(struct sockaddr_in);
   
     serv_info = CALLOC(struct_serv_info);
     if(!serv_info){
         errExit("irc_server: malloc failure serv_info");
     }
 
-    /* set a pointer for easier access to serv_sock */
+    /* set a pointer for easier access to server socket_info struct */
     serv_sock = &(serv_info->socket_info);
 
     /* init serv_info  */
-    serv_info->domain = NET_DOMAIN;
+    serv_info->domain    = NET_DOMAIN;
+    serv_info->pcol      = IP_PROTOCOL;
+    serv_info->sock_type = SOCK_TYPE;
 
     /* dot to binary representation */
     if(inet_pton(NET_DOMAIN, SERV_ADDR, &serv_info->addr) != 1){
@@ -41,11 +43,10 @@ void irc_server(void)
     }
 
     /* init dot representation address */
-    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN+1);
+    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN);
     if(!serv_info->dot_addr){
         errExit("irc_server: malloc failure dot_addr");
     }
-
     strncpy(serv_info->dot_addr, SERV_ADDR, strlen(SERV_ADDR));
 
     /* set socket address information for struct sockAddr_in */
@@ -56,7 +57,7 @@ void irc_server(void)
     serv_sock->sin_port = serv_info->port = htons(SERV_PORT);
 
     /* open_connection sets serv_info->sockfd and initiates listen */
-    if(open_connection(serv_info) == FAILURE){
+    if(_usrUnlikely(open_connection(serv_info) == FAILURE)){
         errExit("irc_server: Initial connection to network failed");
     }
 
@@ -66,7 +67,6 @@ void irc_server(void)
      *        trying to recieve something and reply, just a single one to start
      *************************************************************************/
     
-    serv_sock_size = sizeof(serv_sock);
     accept(serv_info->sockfd, (void*) serv_sock, &serv_sock_size);
     
     recieve_from_client(serv_info->sockfd, rx, IO_BUFF, NO_FLAGS);

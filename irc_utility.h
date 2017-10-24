@@ -16,10 +16,11 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define SERV_ADDR   "131.252.208.28"  /* TODO: Find a reliable ip server */
-#define SERV_LEN    15
+#define SERV_ADDR   "10.200.244.165" //"131.252.208.28"  /* TODO: Find a reliable ip server */
+#define SERV_LEN    15                /* NOTE: Includes terminating '\0' */
 #define SERV_PORT   60000             /* port listening on server */
 #define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
+#define SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define IP_PROTOCOL 0                 /* Default for type in socket() */
 
 #define IO_BUFF 512 /* max bytes that can be sent/recieved */
@@ -34,7 +35,8 @@ typedef struct server_info{
     char *dot_addr;      /* dotted representation of IP address */
     in_port_t port;      /* port used at IP address, network ordered */
     int domain;          /* AF_INET or AF_INET6 */
-    int sock_type;       /* IP protocol family, socket() definitions. */
+    int sock_type;       /* type of socket, socket() definition. */
+    int pcol;            /* Protocol argument used in socket() */
     int sockfd;          /* socket file descriptior */
     struct sockaddr_in socket_info; /* socket API struct, IPV4 */
 } struct_serv_info;

@@ -1,10 +1,8 @@
 /*******************************************************************************
- * Filename: irc_client.h
+ * Filename: irc_server.h
+ *
  *
  * Written by: James Ross
  ******************************************************************************/
 
-#include "client.h"
-
-/* Function executed by main to run the irc client */
-void irc_client(void);
+void irc_server(void);

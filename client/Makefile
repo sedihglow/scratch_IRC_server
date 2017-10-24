@@ -1,5 +1,5 @@
 CC = gcc
-CPPFLAGS = -c -Wall -Wextra -pthread -m64 -O0 -g -pedantic -std=c99 
+CPPFLAGS = -c -Wall -Wextra -pthread -m64 -O0 -g -pedantic -std=c99
 LDFLAGS = -pthread -m64
 
 cli_irc.out:			main.o err_handle.o convNum.o irc_client.o client.o
@@ -11,7 +11,7 @@ main.o:					./main.c ./irc_client.h
 irc_client.o:			./irc_client.c ./client.h
 						$(CC) $(CPPFLAGS) ./irc_client.c
 
-client.o:				./client.c ../utility_sys.h
+client.o:				./client.c ../irc_utility.h
 						$(CC) $(CPPFLAGS) ./client.c
 
 err_handle.o:			../err_handle/err_handle.c
@@ -36,7 +36,7 @@ clean:					# clean the directory
 						$(info -- Cleaning The Directory --)
 						rm -rf *.o cli_irc.out
 .PHONY: run
-all:					# run the program as follows
+run:					# run the program as follows
 						$(info -- Running Program --)
 						make
 						./cli_irc.out

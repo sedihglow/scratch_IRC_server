@@ -16,6 +16,10 @@
 #define P_RD 0 // value for a pipe read fd in pipefd[2]
 #define P_WR 1 // value for a pip write fd in pipefd[2]
 
+#ifndef __USE_MISC
+    #define __USE_MISC 1 // gives access to random and misc stdlib functions
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -37,9 +41,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifndef __USE_MISC
-    #define __USE_MISC 1 // gives access to random and misc stdlib functions
-#endif
 
 #define NDEBUG 1
 #include <assert.h>
@@ -51,8 +52,8 @@
 #define _usrLikely(x)      __builtin_expect(!!(x), 1)
 #define _usrUnlikely(x)    __builtin_expect(!!(x), 0)
 
-/*  an input buffer with a '\0' terminatior at the end.
- *  If nothing is read, buff[0] = '\0'.      
+/*  buff is set to '\0' for nByte before read occures. 
+ *  If nothing is read, buff[0] = '\0', retBytes == 0.
  *  - fd    == int   , File descriptor used for allocInputBuff()
  *  - buff  == char* , Buffer to be filled with character data from fd.
  *  - nbyte == size_t, number of bytes to read 
@@ -62,42 +63,55 @@
 #define READ_INPUT(fd, buff, nByte, retBytes)                                  \
 {                                                                              \
     assert(buff != NULL);                                                      \
-    if((retBytes = read(fd, (void*) buff, nByte)) == FAILURE)                  \
+    memset(buff, '\0', nByte);                                                 \
+    if(_usrUnlikely((retBytes = read(fd, (void*) buff, nByte)) == FAILURE))    \
         errExit("READ_INPUT, read() failure");                                 \
 } /* end READ_INPUT */
 
 /* Copy a variable ammount of characters from a buffer based on a given 
- * position. Places a null value at end of inBUFF
+ * position. Places a null value at end of inBuff
+ * 
  * Place resulting string in resStr based on a given conditional. 
- * NOTE: Typically used in specific steps or in a while loop. 
+ * resStr is cleared by resLen to '\0' values before being written to.
+ *
+ * To make sure conditional was met and copied check the value before the first
+ * '\0' to ensure it is one of your delimiters, otherwise 
+ * -end of buffer- was reached.
+ *
+ * If data in inbuff is a string, the end of the string is found when the last
+ * two index of resStr is '\0'.
+ *
+ * EOF is reached when the resulting string has more than 1 terminating '\0'
+ * value.
+ *
  * - fd     == int  , File descriptor corresponding to inBuf.
  * - inBuf  == char*, copy from buff. Must not be NULL, leave room for '\0'
  * - bfPl   == int, the current location inside inBuf.
  * - nbyte  == size_t, number of bytes to read
- * - retBytes == number of bytes returned when READ_INPUT is called
  * - resStr == char*, buffer to copy to.
  * - resLen == size_t, length of resStr for conidional overflow stop point 
  * - conditional == The conditionals desired in the copy process.
  *                Example: inBuf[i] != ' ' && inBuf[i] != '\n' 
  */
-#define CL_READ_PARSE(fd, inBuf, bfPl, resStr, resLen, conditional)\
+#define PARSE_BUFF(fd, inBuf, bfPl, resStr, resLen, conditional)\
 {                                                                              \
     int _TM_ = 0;                                                              \
     assert(resStr != NULL && inBuf != NULL);                                   \
                                                                                \
+    memset(resStr, '\0', resLen);                                              \
     for(_TM_ = 0; conditional && _TM_ < resLen-1; ++_TM_)                      \
     {                                                                          \
         resStr[_TM_] = inBuf[bfPl];                                            \
         ++bfPl;                  /* increase buff placement */                 \
     } /* end for */                                                            \
     resStr[_TM_] = '\0';                                                       \
-} // end CL_READ_PARSE
+} /* end PARSE_BUFF */
 
 /* Clears STDIN using read() */
 #define RD_CLR_STDIN(){                                                        \
-    char __ch[1] = {'\0'};                                                     \
-    while(read(STDIN_FILENO, (void*)__ch, 1) && *__ch != '\n' && *__ch != EOF);\
-}//end RD_CLR_STDIN
+    char __ch = {'\0'};                                                        \
+    while(read(STDIN_FILENO, (void*)&__ch, 1) && __ch != '\n' && __ch != EOF); \
+} /* end RD_CLR_STDIN */
 
 /* TODO: Adjust this macro or make an alternate that can call a function with
          variable arguments, rather than just one argument. (i.e. free(pntr);) */
@@ -138,6 +152,6 @@
         --((resRetPtr) -> tv_sec);                                             \
         (resRetPtr) -> tv_nsec = ((resRetPtr) -> tv_nsec) + _NANO_1SEC;        \
     }                                                                          \
-}//end TIMESPEC_SUB
+} /* end TIMESPEC_SUB */
 
 #endif /************ EOF **************/

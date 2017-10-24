@@ -17,8 +17,8 @@
 
 /* Server connectivity information */
 #define SERV_ADDR   "131.252.208.28"  /* TODO: Find a reliable ip server */
-#define SERV_LEN    16                /* Fits IPV4 */
-#define SERV_PORT   31000             /* port listening on server */
+#define SERV_LEN    15
+#define SERV_PORT   60000             /* port listening on server */
 #define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define IP_PROTOCOL 0                 /* Default for type in socket() */
 

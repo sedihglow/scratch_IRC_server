@@ -72,6 +72,5 @@ void irc_server(void)
     recieve_from_client(serv_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 
     printf("\n%s\n", rx);
-
     /************************************************************************/
 }

@@ -16,14 +16,18 @@ void irc_server(void)
 {
     char rx[IO_BUFF] = {'\0'}; /* TODO: May be temp, evaluate on implementation */
 
-    struct_serv_info *serv_info;
+    socklen_t          size;
+    struct_serv_info   *serv_info;
+    struct_cli_info    *cli_info;
     struct sockaddr_in *serv_sock;
-    socklen_t serv_sock_size = sizeof(struct sockaddr_in);
   
     serv_info = CALLOC(struct_serv_info);
-    if(!serv_info){
-        errExit("irc_server: malloc failure serv_info");
+    cli_info  = CALLOC(struct_cli_info);
+    if(_usrUnlikely(!serv_info || !cli_info)){
+        errExit("irc_server: Malloc failed on serv/cli info");
     }
+
+    size = sizeof(struct sockaddr_in);
 
     /* set a pointer for easier access to server socket_info struct */
     serv_sock = &(serv_info->socket_info);
@@ -44,9 +48,10 @@ void irc_server(void)
 
     /* init dot representation address */
     serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN);
-    if(!serv_info->dot_addr){
+    if(_usrUnlikely(!serv_info->dot_addr)){
         errExit("irc_server: malloc failure dot_addr");
     }
+
     strncpy(serv_info->dot_addr, SERV_ADDR, strlen(SERV_ADDR));
 
     /* set socket address information for struct sockAddr_in */
@@ -66,10 +71,13 @@ void irc_server(void)
      *        exceptions.
      *        trying to recieve something and reply, just a single one to start
      *************************************************************************/
-    
-    accept(serv_info->sockfd, (void*) serv_sock, &serv_sock_size);
-    
-    recieve_from_client(serv_info->sockfd, rx, IO_BUFF, NO_FLAGS);
+  
+    cli_info->sockfd = accept(serv_info->sockfd, (void*) &cli_info->socket_info, &size);
+    if(_usrUnlikely(cli_info->sockfd == FAILURE)){
+        errExit("irc_server: accepting connection failed.\n");
+    }
+
+    receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 
     printf("\nprinting result: %s\n", rx);
     /************************************************************************/

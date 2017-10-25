@@ -16,8 +16,8 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define SERV_ADDR   "10.200.244.165" //"131.252.208.28"  /* TODO: Find a reliable ip server */
-#define SERV_LEN    15                /* NOTE: Includes terminating '\0' */
+#define SERV_ADDR   "10.0.0.171"
+#define SERV_LEN    11//sizeof(SERV_ADDR)
 #define SERV_PORT   60000             /* port listening on server */
 #define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define SOCK_TYPE   SOCK_STREAM       /* tcp socket */
@@ -57,7 +57,7 @@ typedef struct stream_io{
     size_t rx_len;
 } struct_io_buff;
 */
- 
+
 static inline ssize_t socket_transmit(int sockfd, char *tx, 
                                       size_t len, int flags)
 {
@@ -67,6 +67,7 @@ static inline ssize_t socket_transmit(int sockfd, char *tx,
     while(remaining > 0){
         sent = send(sockfd, tx, remaining, flags);
         if(_usrUnlikely(sent == FAILURE)){
+            errMsg("socket_transmit: send() failed");
             return FAILURE;
         }
 
@@ -78,16 +79,21 @@ static inline ssize_t socket_transmit(int sockfd, char *tx,
    return (len - remaining);
 } /* end socket_transmit */
 
-static inline ssize_t socket_recieve(int sockfd, char *rx, 
+static inline ssize_t socket_receive(int sockfd, char *rx, 
                                      size_t len, int flags)
 {
-    ssize_t received;       /* number of bytes read from a socket */
-    size_t remaining = len; /* number of bytes still in buffer */
+    ssize_t received = 1;    /* bytes read from a socket, non-EOF init */
+    size_t  remaining = len; /* bytes still in buffer */
 
-    while(remaining > 0 && received != EOF){
+
+    while(remaining > 0){
         received = recv(sockfd, rx, remaining, flags);
         if(_usrUnlikely(received == FAILURE)){
+            errMsg("socket_recieve: recv() failed");
             return FAILURE;
+        }
+        else if(received == 0){
+            break;
         }
 
         remaining -= received;

@@ -40,7 +40,7 @@ ssize_t send_to_client(int sockfd, char *tx, size_t len, int flags)
     return socket_transmit(sockfd, tx, len, flags);
 } /* end send_to_client */
 
-ssize_t recieve_from_client(int sockfd, char *rx, size_t len, int flags)
+ssize_t receive_from_client(int sockfd, char *rx, size_t len, int flags)
 {
-    return socket_recieve(sockfd, rx, len, flags);
+    return socket_receive(sockfd, rx, len, flags);
 } /* end recieve_from_client */

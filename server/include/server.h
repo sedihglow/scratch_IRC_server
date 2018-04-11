@@ -1,11 +1,10 @@
 /*******************************************************************************
  * Filename: server.h
  *
- *
  * Written by: James Ross
  ******************************************************************************/
 
-#include "../irc_utility.h"
+#include "../../shared/include/irc_utility.h"
 
 #define LQ_SIZE 15  /* the backlog queue suggested in listen() */
 

@@ -1,22 +1,31 @@
-/*
-    filename: convNum.h
+/*******************************************************************************
+ * Level 1 cache similator project
+ * ECE 4/585
+ * Mark Faust
+ * 12/3/2017
+ * Portland State University, Portland OR
+ * written and property of : James Ross
+ *
+ *   filename: convNum.h
     Turns a string of characters into a their numerical equivilance using
     strtoul family and error checking the results.
-*/
+ ******************************************************************************/
 
-#ifndef _GET_NUM_H
-#define _GET_NUM_H
+
+
+#ifndef _CON_NUM_H
+#define _CONV_NUM_H
                     /* definitions */
-#define GN_NONEG    0x1      /* Value must be >= 0 */
-#define GN_GT_O     0x2      /* Value must be > 0  */
+#define CN_NONEG    0x1      /* Value must be >= 0 */
+#define CN_GT_Z     0x2      /* Value must be > 0  */
 
                             /* By default base is passed in as 0 (strtol(3)) */
-#define GN_BASE_10  0x4     /* Value is expressed in decimal */
-#define GN_BASE_8   0x8     /* Value is expressed in octal */
-#define GN_BASE_16  0x16    /* Value is expressed in hexadecimal */
+#define CN_BASE_10  0x4     /* Value is expressed in decimal */
+#define CN_BASE_8   0x8     /* Value is expressed in octal */
+#define CN_BASE_16  0x10    /* Value is expressed in hexadecimal */
 
                             /* By default, process uses exit() on error */
-#define GN_NOEXIT_  0x32    /* Return 0, set errno on conversion error */
+#define CN_NOEXIT_  0x20    /* Return 0, set errno on conversion error */
 
 #include <sys/types.h>
 #include <inttypes.h>

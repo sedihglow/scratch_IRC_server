@@ -5,12 +5,14 @@
  * Written by: James Ross
  ******************************************************************************/
 
-#include "irc_server.h"
+#include "../include/irc_server.h"
 
 /*******************************************************************************
  * TODO: Cleaning up on error before exiting not implemented yet. Mallocs not
  *       freed on error yet. Waiting until i know how i want to handle them
  *       since in user space.
+ *
+ *       pull malloc and calloc macros into this beetch.
  ******************************************************************************/
 void irc_server(void)
 {
@@ -66,7 +68,8 @@ void irc_server(void)
         errExit("irc_server: Initial connection to network failed");
     }
 
-    /* TODO: Sending message through port for initial testing. Implementation
+    /**************************************************************************
+     * TODO: Sending message through port for initial testing. Implementation
      *        for messages will change and likely include signals/processes or
      *        exceptions.
      *        trying to recieve something and reply, just a single one to start

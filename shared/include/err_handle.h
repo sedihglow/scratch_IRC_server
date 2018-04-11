@@ -1,10 +1,12 @@
-/*
-    Functions declared in this header file will handle various error cases
-    including closing the process, printing error messages, and interpreting
-    errno. It also produces a core dump filewhen appropriate.
-
-    filename: err_handle.h
-*/
+/*******************************************************************************
+ *
+ *  Functions declared in this header file will handle various error cases
+ *  including closing the process, printing error messages, and interpreting
+ *  errno. It also produces a core dump file when appropriate.
+ *
+ *   filename: err_handle.h
+ *
+ ******************************************************************************/
 
 #ifndef _ERR_HANDLE_H
 #define _ERR_HANDLE_H
@@ -21,13 +23,13 @@
     #define NORETURN /* defines for compilation */
 #endif
 
-/* functions below pass arguments like printf(3), except errnumExit(), whose 
+/* functions below pass arguments like printf(3), except errnumExit(), whose
    first argument is the error number (obtained without errno).
 
    functions flush stdout unless otherwise specified. */
 
 /* does not terminate, errno for errnum */
-void errMsg(const char *fstring, ...);
+void err_msg(const char *fstring, ...);
 
 /* does not terminate, does not print errno information */
 void noerr_msg(const char *fstring, ...);

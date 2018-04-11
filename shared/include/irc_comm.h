@@ -30,7 +30,7 @@
                             * things.
                             */
 
-typedef struct server_info{
+typedef struct server_info {
     in_addr_t addr;      /* network binary of server address */
     char *dot_addr;      /* dotted representation of IP address */
     in_port_t port;      /* port used at IP address, network ordered */
@@ -41,6 +41,7 @@ typedef struct server_info{
     struct sockaddr_in socket_info; /* socket API struct, IPV4 */
 } struct_serv_info;
 
+
 /*
 typedef struct workspace_buffer{
     char buff[WORK_BUFF];
@@ -48,26 +49,23 @@ typedef struct workspace_buffer{
 } struct_work_buff;
 */
 
-/* Would make use of tx and rx as a ring buffer
+/* make use of tx and rx as a ring buffer */
 typedef struct stream_io{
-    char   tx[IO_BUFF];
-    size_t tx_len;
-
-    char   rx[IO_BUFF];
-    size_t rx_len;
-} struct_io_buff;
-*/
+    char   buff[IO_BUFF];
+    size_t start;
+    size_t end;
+} struct_io_ring;
 
 static inline ssize_t socket_transmit(int sockfd, char *tx, 
                                       size_t len, int flags)
 {
-    ssize_t sent;           /* number of bytes written to socket */
-    size_t remaining = len; /* number of bytes left to write */
+    ssize_t sent;            /* number of bytes written to socket */
+    size_t  remaining = len; /* number of bytes left to write */
 
-    while(remaining > 0){
+    while (remaining > 0) {
         sent = send(sockfd, tx, remaining, flags);
-        if(_usrUnlikely(sent == FAILURE)){
-            errMsg("socket_transmit: send() failed");
+        if (_usrUnlikely(sent == FAILURE)) {
+            err_msg("socket_transmit: send() failed");
             return FAILURE;
         }
 
@@ -85,14 +83,12 @@ static inline ssize_t socket_receive(int sockfd, char *rx,
     ssize_t received = 1;    /* bytes read from a socket, non-EOF init */
     size_t  remaining = len; /* bytes still in buffer */
 
-
-    while(remaining > 0){
+    while (remaining > 0) {
         received = recv(sockfd, rx, remaining, flags);
-        if(_usrUnlikely(received == FAILURE)){
-            errMsg("socket_recieve: recv() failed");
+        if (_usrUnlikely(received == FAILURE)) {
+            err_msg("socket_recieve: recv() failed");
             return FAILURE;
-        }
-        else if(received == 0){
+        } else if (received == 0) {
             break;
         }
 

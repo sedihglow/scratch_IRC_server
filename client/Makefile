@@ -1,42 +1,38 @@
-CC = gcc
-CPPFLAGS = -c -Wall -Wextra -pthread -m64 -O0 -g -pedantic -std=c99
+BIN = ./bin/cli_irc.out
+CC=gcc
+CCFLAGS = -I ./include -I ../shared/include -c -Wall -Wextra -pthread 
+CCFLAGS+= -m64 -O0 -g -pedantic -std=c99
 LDFLAGS = -pthread -m64
 
-cli_irc.out:			main.o err_handle.o convNum.o irc_client.o client.o
-						$(CC) $(LDFLAGS) main.o irc_client.o err_handle.o convNum.o client.o -o cli_irc.out
+SRCS=$(wildcard ./src/*.c) $(wildcard ../shared/src/*.c)
+OBJS=$(SRCS:.c=.o)
 
-main.o:					./main.c ./irc_client.h
-						$(CC) $(CPPFLAGS) ./main.c
+.PHONY: all
+all: $(BIN)
 
-irc_client.o:			./irc_client.c ./client.h
-						$(CC) $(CPPFLAGS) ./irc_client.c
+$(BIN):$(OBJS)
+						$(CC) $(OBJS) -o $@ $(LDFLAGS)
+						
+%.o:%.c
+						$(CC) $(CCFLAGS) -o $@ -c $<
 
-client.o:				./client.c ../irc_utility.h
-						$(CC) $(CPPFLAGS) ./client.c
-
-err_handle.o:			../err_handle/err_handle.c
-						$(CC) $(CPPFLAGS) ../err_handle/err_handle.c
-
-convNum.o:				../convNum/convNum.c
-						$(CC) $(CPPFLAGS) ../convNum/convNum.c
-
-.PHONY: check
-check:					# check for memory leak
+.PHONY: valgrind 
+valgrind:				# check for memory leak
 						$(info -- Checking For Memory Leaks --)
 						make
-						valgrind --leak-check=full ./cli_irc.out
+						valgrind --leak-check=full ./bin/cli_irc.out
 
 .PHONY: debug
 debug:					# GNU debugger
 						$(info -- Debugging --)
-						gdb ./cli_irc.out
+						gdb ./bin/cli_irc.out
 
 .PHONY: clean
 clean:					# clean the directory
 						$(info -- Cleaning The Directory --)
-						rm -rf *.o cli_irc.out
+						rm -rf ./src/*.o ../shared/src/*.o ./bin/cli_irc.out
 .PHONY: run
 run:					# run the program as follows
 						$(info -- Running Program --)
 						make
-						./cli_irc.out
+						./bin/cli_irc.out

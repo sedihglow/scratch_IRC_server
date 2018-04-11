@@ -47,8 +47,8 @@
 #define NDEBUG 1
 #include <assert.h>
 
-#include "./convNum/convNum.h"       /* str to int functions */
-#include "./err_handle/err_handle.h" /* general error printing */
+#include "convNum.h"       /* str to int functions */
+#include "err_handle.h" /* general error printing */
 
 /* GNU compiler native to hint for branch prediction in user space */
 #define _usrLikely(x)      __builtin_expect(!!(x), 1)

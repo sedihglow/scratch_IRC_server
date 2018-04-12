@@ -10,10 +10,11 @@
 typedef struct irc_info {
     struct_client_info *client;
     struct_serv_info   *serv_info;
-    struct_io_ring     *rx;
     struct_io_ring     *tx;
+    struct_io_ring     *rx;
 } struct_irc_info;
 
 /* Function executed by main to run the irc client */
-void free_irc_info(struct_irc_info);
+struct_irc_info* init_irc_info(void);
+void irc_free_info(struct_irc_info **dest);
 void irc_client(void);

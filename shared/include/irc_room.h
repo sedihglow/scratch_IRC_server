@@ -10,9 +10,16 @@
 
 #include "utility_sys.h"
 
-#define _R_USR_MAX 100     // TODO: Not sure to keep this just check overflow, also does client need it?
-#define _H_STR_MAX 500     // 500 string history.
-#define _H_STR_LEN_MAX 255 // for comparison before allocation
+/******************************************************************************* 
+ * TODO: Client might not be the one checking this since multiple clients can 
+ *       try to connet at once. Server needs to let the client know there is 
+ *       no room.
+ ******************************************************************************/
+#define _R_USR_MAX      100 // TODO: See todo above ;)
+#define _H_STR_MAX      500 // 500 string history.
+#define _H_STR_LEN_MAX  255 // for comparison before additional allocation
+#define _R_NAME_LEN_MAX 20  // room name max
+#define _R_PW_LEN_MAX   25  // passwords up to 25 characters for private rooms
 
 /* what a room is */
 typedef struct room_info {

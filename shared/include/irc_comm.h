@@ -16,19 +16,21 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define SERV_ADDR   "10.0.0.171"
-#define SERV_LEN    11//sizeof(SERV_ADDR)
-#define SERV_PORT   60000             /* port listening on server */
-#define NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
-#define SOCK_TYPE   SOCK_STREAM       /* tcp socket */
-#define IP_PROTOCOL 0                 /* Default for type in socket() */
+#define _COM_SERV_ADDR   "10.0.0.171"
+#define _COM_SERV_LEN    11//sizeof(SERV_ADDR)
+#define _COM_SERV_PORT   60000             /* port listening on server */
+#define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
+#define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
+#define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */
 
-#define IO_BUFF 512 /* max bytes that can be sent/recieved */
+#define _COM_IO_BUFF 512 /* max bytes that can be sent/recieved */
                            /* TODO: This is not max characters that user can
                             * input, if there is header information this
                             * includes that. Depends on how i implement other
                             * things.
                             */
+
+#define IO_RING_SIZE 500 // size of ring buffer
 
 typedef struct server_info {
     in_addr_t addr;      /* network binary of server address */
@@ -38,7 +40,7 @@ typedef struct server_info {
     int sock_type;       /* type of socket, socket() definition. */
     int pcol;            /* Protocol argument used in socket() */
     int sockfd;          /* socket file descriptior */
-    struct sockaddr_in socket_info; /* socket API struct, IPV4 */
+    struct sockaddr_in *socket_info; /* socket API struct, IPV4 */
 } struct_serv_info;
 
 
@@ -49,13 +51,31 @@ typedef struct workspace_buffer{
 } struct_work_buff;
 */
 
-/* make use of tx and rx as a ring buffer */
+/****************************************************************************** 
+ * DEVELOPMENT NOTE: This is a generic ring buffer but it is IO since COM
+ *                   should be the only thing messing with struct_io_ring
+ *
+ *                   If not, update this comment and the name to generic ring
+ *                   buffer?
+ *
+ * make use of tx and rx as a ring buffer 
+ ******************************************************************************/
 typedef struct stream_io{
-    char   buff[IO_BUFF];
+    char   *buff;
     size_t start;
     size_t end;
 } struct_io_ring;
 
+/******************************************************************************* 
+ * TODO: Maybe make these functions since they are long, though my current
+ * protocol with them just calls a seperate stack frame and just calls the
+ * inline, which the compiler should notice and just make that 1 stack frame
+ * this code...
+ *
+ * An analyze binary size, which i think is okay since it is only called in a
+ * single line function that returns this. Other issues though? Memory
+ * imprint in a different way?
+ ******************************************************************************/
 static inline ssize_t socket_transmit(int sockfd, char *tx, 
                                       size_t len, int flags)
 {

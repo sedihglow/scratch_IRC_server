@@ -59,25 +59,27 @@
  *                      Non Command Definitions
  ******************************************************************************/
 #define IO_STR_LEN_MAX H_STR_LEN_MAX // definition found in irc_room.h
-#define IO_MAX 225 // max characters a user can input for a message
+#define IO_MAX    225   // max characters a user can input for a message
+#define NAME_BUFF 14    // includes '\0'
+#define F_MAX     30    // 30 friends max. Too popular too bad. 
 
 typedef struct friend_list {
-    char **flist;
+    char **list;
 } struct_flist;
-
 
 typedef struct client_info {
     struct_room_state *room;
     char *name;
-    struct_flist flist;
+    struct_flist *f_list;
 } struct_client_info;
 
-int block_enemy(struct_client_info *client, char *name);
-int inv_friend_to_room(struct_client_info *client, char *name);
-int display_friends(struct_client_info *client);
-int remove_friend(struct_client_info *client);
-int add_friend(struct_client_info *client);
-int request_room(struct_client_info *client);
+struct_client_info* cli_init_info(void);
+int cli_block_enemy(struct_client_info *client, char *name);
+int cli_inv_friend_to_room(struct_client_info *client, char *name);
+int cli_display_friends(struct_client_info *client);
+int cli_remove_friend(struct_client_info *client);
+int cli_add_friend(struct_client_info *client);
+int cli_request_room(struct_client_info *client);
 
 #endif
 /****** EOF ******/

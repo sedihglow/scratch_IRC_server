@@ -16,5 +16,8 @@ typedef struct room_state {
 
 struct_room_state* room_init_state(size_t user_name_size);
 struct_room_info*  room_init_info(size_t user_name_size);
+void room_free_state(struct_room_state *dest);
+void room_free_info(struct_room_info *dest);
+
 int room_switch(struct_room_state *room_state, struct_room_info *new_room);
 /***** EOF *****/

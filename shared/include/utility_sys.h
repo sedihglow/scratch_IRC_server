@@ -138,19 +138,23 @@
  *
  * -Type is the type of pointer used. (VA_ARGS could be void for example.). 
  * -... is a variable argument list.
+ *
+ * NOTE: Modified to only be used for free
  ******************************************************************************/
 #define APPLY_FUNCT(type, funct, ...)                                          \
-{                                                                              \
+{                                                                             \
     void *stopper = (int[]){0};                                                \
     type **apply_list = (type*[]){__VA_ARGS__, stopper};                       \
     int __i_;                                                                  \
                                                                                \
-    for(__i_ = 0; apply_list[__i_] != stopper; ++__i_){                        \
-        (funct)(apply_list[__i_]);}                                            \
+    for (__i_ = 0; apply_list[__i_] != stopper; ++__i_) {                      \
+        if (apply_list[__i_])                                                  \
+            (funct)(apply_list[__i_]);                                          \
+    }                                                                          \
 } /* end apply_funct */
     
 /* Apply free to every pointer given in the argument list using apply_funct() */
-#define FREE_ALL(...) if (APPLY_FUNCT(void, free, __VA_ARGS__)
+#define FREE_ALL(...) APPLY_FUNCT(void, free, __VA_ARGS__)
 
 /******************************************************************************* 
  * Subtract two timespec structures and place them in a resulting timespec

@@ -41,7 +41,7 @@ struct_serv_info* com_init_serv_info(void)
     return init;
 }/* end com_init_serv_info */
 
-struct_io_ring* com_init_io_buff() 
+struct_io_ring* com_init_io_ring() 
 {
     struct_io_ring *init;
 
@@ -63,6 +63,25 @@ struct_io_ring* com_init_io_buff()
     
     return init;
 } /* end com_init_io_buff */
+
+
+void com_free_serv_info(struct_serv_info *dest)
+{
+    /* TODO: Free socket_info properly. There must be a function call for it. 
+     *        Yeah, i am mad about it.
+     *
+     *        Also i never called somethig for it in allocation, and i also
+     *        didnt allocate anything inside of the struct.
+     */
+    FREE_ALL(dest->dot_addr, dest->socket_info);
+    dest->dot_addr = NULL;
+    dest->socket_info = NULL;
+}
+
+void com_free_io_ring(struct_io_ring *dest)
+{
+    free(dest->buff);
+}
 
 // TODO: Might just make this a display, only local to client, not to history
 int request_who(char *name, bool *online)

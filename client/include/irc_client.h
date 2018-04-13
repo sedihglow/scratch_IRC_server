@@ -16,5 +16,5 @@ typedef struct irc_info {
 
 /* Function executed by main to run the irc client */
 struct_irc_info* init_irc_info(void);
-void irc_free_info(struct_irc_info **dest);
+void irc_free_info(struct_irc_info *dest);
 void irc_client(void);

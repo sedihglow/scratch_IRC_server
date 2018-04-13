@@ -21,7 +21,7 @@
 
 #define B_L      "/b l"       //                  : Who you blocked  TODO: limit list size for security
 #define B_LIST   "/b list"    //                  : Same as above
-#define B_A      "/b a"       // /b a <name>      : Add someone to block list
+#define B_A      "/b a"       // /b a <name>      : Block the fucker
 #define B_ADD    "/b add"     // /b add <name>    : same as above
 #define B_R      "/b r"       // /b r <name>      : Remove from block list
 #define B_REM    "/b remove"  // /b remove <name> : same as above
@@ -36,7 +36,7 @@
 #define LOG_OUT  "/logout"       //                  : Back to login screen.
 #define INVITE   "/invite"       // /invite <name>   : Invite into current channel
 #define INV      "/inv"          // /inv <name>      : Same as above
-#define BLOCK    "/block"        // /block <name>    : Block the fucker
+// TODO: THERE SHOULD BE A BAN FROM CHANNEL COMMAND. ... should be... ;)
 #define L_ROOM   "/room l"       // /channel l       : List all public channels
 #define LST_ROOM "/room list"    //                  : Same as above
 
@@ -74,6 +74,7 @@ typedef struct client_info {
 } struct_client_info;
 
 struct_client_info* cli_init_info(void);
+void cli_free_info(struct_client_info *dest);
 int cli_block_enemy(struct_client_info *client, char *name);
 int cli_inv_friend_to_room(struct_client_info *client, char *name);
 int cli_display_friends(struct_client_info *client);

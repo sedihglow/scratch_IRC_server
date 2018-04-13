@@ -24,11 +24,12 @@
 /* what a room is */
 typedef struct room_info {
     char *room_name;
-    bool pub_flag;      // is this room public or not?
-    char *password;     // if not public. Otherwise dont allocate
-    uint32_t num_users; // TODO: Max num users per channel?
-    char **room_users;  // Reallocates in chunks.
-    char **history;     // Ring buffer.
+    bool pub_flag;       // is this room public or not?
+    char *password;      // if not public. Otherwise dont allocate
+    uint32_t num_users;  // TODO: Max num users per channel?
+    char **room_users;   // Reallocates in chunks.
+    size_t max_name_len; // Given in init, used for freeing room_users[]
+    char **history;      // Ring buffer.
     int hist_start;
     int hist_end;
 } struct_room_info;

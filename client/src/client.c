@@ -10,10 +10,44 @@
  *                          Static Functions
  ******************************************************************************/
 
+/* TODO:
+ * This should be public and in a debug header that you will make right the
+ * fuck now bitch. */
+static int find_debug_cmd(char *input)
+{
+    
+    return DRC_ERR;
+}
+
 static int find_fcmd(char *input)
 {
+    int ret;
 
-    return 0;
+    ret = strncmp(input, "add ", 4);
+    if (ret == 0)
+        return RC_FA;
+
+    ret = strncmp(input, "a ", 2);
+    if (ret == 0)
+        return RC_FA;
+
+    ret = strncmp(input, "list ", 5);
+    if (ret == 0)
+        return RC_FL;
+
+    ret = strncmp(input, "l ", 2);
+    if (ret == 0)
+        return RC_FL;
+
+    ret = strncmp(input, "remove ", 7);
+    if (ret == 0)
+        return RC_FR;
+
+    ret = strncmp(input, "r ", 2);
+    if (ret == 0)
+        return RC_FR;
+
+    return RC_ERR;
 } /* end find_fcmd */
 
 static int find_bcmd(char *input)
@@ -22,10 +56,19 @@ static int find_bcmd(char *input)
     return 0;
 } /* end find_bcmd */
 
+static int find_inv_cmd(char *input)
+{
+    return 0;
+}
+
+static int find_room_cmd(char *input)
+{
+    return 0;
+}
+
 /******************************************************************************* 
  *                          Header Functions
  ******************************************************************************/
-
 
 /******************************************************************************
  * Initializes the struct_client_info
@@ -99,6 +142,10 @@ void cli_free_info(struct_client_info *dest)
  *
  * Returns identifier showing which type of input it was.
  *
+ * Some functions pass an incrented address so we dont compare the same shit
+ * twice. Only one that doesnt in /inv vs /invite since there is no space
+ * seperator.
+ *
  * TODO: This might be threaded and called after input, on the thread that runs 
  *       the input waiting. Then pass this return value to main thread.
  ******************************************************************************/
@@ -106,56 +153,57 @@ int parse_args(char *input)
 {
     int ret = 0;
 
-    ret = strncmp(input, "/f", 2);
-    if (ret == 0)
-        return find_fcmd(input);
+    ret = strncmp(input, "/f ", 3);
+    if (ret != RC_ERR)
+        return find_fcmd(input+3);
 
-    ret = strncmp(input, "/b", 2);
-    if (ret == 0)
-        return find_bcmd(input);
+    ret = strncmp(input, "/b ", 3);
+    if (ret != RC_ERR)
+        return find_bcmd(input+3);
 
     ret = strncmp(input, WHO, sizeof(WHO));
-    if (ret == 0)
-        return;
+    if (ret != RC_ERR)
+        return RC_WHO;
 
     ret = strncmp(input, JOIN, sizeof(JOIN));
-    if (ret == 0)
-        return;
+    if (ret != RC_ERR)
+        return RC_JOIN;
 
     ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT));
-    if (ret == 0)
-        return;
-
-    ret = strncmp(input, INVITE, sizeof(LOG_OUT));
-    if (ret == 0) 
-        return;
+    if (ret != RC_ERR)
+        return RC_LOGOUT;
 
     ret = strncmp(input, INV, sizeof(INV));
-    if (ret == 0)
-        return;
+    if (ret != RC_ERR)
+        return find_inv_cmd(input);
 
-    ret = strncmp(input, L_ROOM, sizeof(L_ROOM));
-    if (ret == 0)
-        return;
-
-    ret = strncmp(input, LST_ROOM, sizeof(LST_ROOM));
-    if (ret == 0) 
-        return;
+    ret = strncmp(input, ROOM_L, sizeof(ROOM_L));
+    if (ret != RC_ERR)
+        return find_room_cmd(input+5);
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG));
-    if (ret == 0) 
-        return;
+    if (ret != RC_ERR)
+        return RC_PM;
 
+    /* This needs to be AFTER comparing ROOM_L since both start with /r */
     ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP));
-    if (ret == 0)
-        return;
+    if (ret != RC_ERR)
+        return RC_PR;
+
+    ret = strncmp(input, VOID, sizeof(PRIV_REP));
+    if (ret != RC_ERR)
+        return RC_VOID;
 
     ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC));
-    if (ret == 0)
-        return;
+    if (ret != RC_ERR)
+        return RC_EXIT;
 
-    return 0;
-}
+    ret = strncmp(input, "/d ", 3);
+    if (ret != RC_ERR)
+        return find_debug_cmd(input+3);
+
+    return RC_MSG;
+} /* end parse_args */
 
 /*******************************************************************************
  * Command: /f a

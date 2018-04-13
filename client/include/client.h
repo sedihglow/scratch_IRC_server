@@ -45,7 +45,7 @@
 #define PRIV_REP "/r"     // /r "msg"         : Reply to previos PM 
 
 /******************************************************************************
- *                      Debug Definitions TODO: Maybe? move to a test harness
+ *                      Debug Definitions TODO: Maybe? move to a debug header? 
  ******************************************************************************/
 #define D_PRINT   "/d yp"      // Turn on debug print statments, sent by pm?
 #define D_NOPRINT "/d np"      // Turn off debug print statments

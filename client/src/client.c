@@ -7,10 +7,24 @@
 #include "client.h"
 
 /******************************************************************************* 
- *                          Static prototypes 
+ *                          Static Functions
  ******************************************************************************/
 
+static int find_fcmd(char *input)
+{
 
+    return 0;
+} /* end find_fcmd */
+
+static int find_bcmd(char *input)
+{
+
+    return 0;
+} /* end find_bcmd */
+
+/******************************************************************************* 
+ *                          Header Functions
+ ******************************************************************************/
 
 
 /******************************************************************************
@@ -93,52 +107,52 @@ int parse_args(char *input)
     int ret = 0;
 
     ret = strncmp(input, "/f", 2);
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return find_fcmd(input);
 
     ret = strncmp(input, "/b", 2);
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return find_bcmd(input);
 
     ret = strncmp(input, WHO, sizeof(WHO));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, JOIN, sizeof(JOIN));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, INVITE, sizeof(LOG_OUT));
-    if (ret == 0) {
-    }
+    if (ret == 0) 
+        return;
 
     ret = strncmp(input, INV, sizeof(INV));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, L_ROOM, sizeof(L_ROOM));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, LST_ROOM, sizeof(LST_ROOM));
-    if (ret == 0) {
-    }
+    if (ret == 0) 
+        return;
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG));
-    if (ret == 0) {
-    }
+    if (ret == 0) 
+        return;
 
     ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC));
-    if (ret == 0) {
-    }
+    if (ret == 0)
+        return;
 
     return 0;
 }

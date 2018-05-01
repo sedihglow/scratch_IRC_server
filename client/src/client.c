@@ -10,14 +10,14 @@
  *                          Static Functions
  ******************************************************************************/
 
-/* TODO:
- * This should be public and in a debug header that you will make right the
- * fuck now bitch. */
-static int find_debug_cmd(char *input)
-{
-    
-    return DRC_ERR;
-}
+
+/*******************************************************************************
+ * TODO: NOTE: Aware of magic numbrs and redundant compares copied into other
+ *             functions such as "add ", "a ",etc,etc. Not sure what to do bout
+ *             it that would be any more efficient.
+ *
+ *             Maybe make them each an inline? :/ w/e
+ ******************************************************************************/
 
 static int find_fcmd(char *input)
 {
@@ -52,19 +52,64 @@ static int find_fcmd(char *input)
 
 static int find_bcmd(char *input)
 {
+    int ret;
 
-    return 0;
+    ret = strncmp(input, "l ", 2);
+    if (ret == 0)
+        return RC_BL;
+
+    ret = strncmp(input, "list ", 5);
+    if (ret == 0)
+        return RC_BL;
+
+    ret = strncmp(input, "a ", 2);
+    if (ret == 0)
+        return RC_BA;
+
+    ret = strncmp(input, "add ", 4);
+    if (ret == 0)
+        return RC_BA;
+
+    ret = strncmp(input, "r ", 2);
+    if (ret == 0)
+        return RC_BR;
+
+    ret = strncmp(input, "remove ", 6);
+    if (ret == 0)
+        return RC_BR;
+
+    return RC_ERR;
 } /* end find_bcmd */
 
 static int find_inv_cmd(char *input)
 {
-    return 0;
+    int ret;
+
+    ret = strncmp(input, "inv ", 4);
+    if (ret == 0)
+        return RC_INV;
+
+    ret = strncmp(input, "invite ", 7);
+    if (ret == 0)
+        return RC_INV;
+
+    return RC_ERR;
 }
 
 static int find_room_cmd(char *input)
 {
-    return 0;
-}
+    int ret;
+
+    ret = strncmp(input, "invite ", 7);
+    if (ret == 0)
+        return RC_INV;
+      
+    ret = strncmp(input, "invite ", 7);
+    if (ret == 0)
+        return RC_INV;
+
+    return RC_ERR;
+} /* end find_room_cmd */
 
 /******************************************************************************* 
  *                          Header Functions
@@ -154,53 +199,50 @@ int parse_args(char *input)
     int ret = 0;
 
     ret = strncmp(input, "/f ", 3);
-    if (ret != RC_ERR)
+    if (ret == 0)
         return find_fcmd(input+3);
 
     ret = strncmp(input, "/b ", 3);
-    if (ret != RC_ERR)
+    if (ret == 0)
         return find_bcmd(input+3);
 
     ret = strncmp(input, WHO, sizeof(WHO));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_WHO;
 
     ret = strncmp(input, JOIN, sizeof(JOIN));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_JOIN;
 
     ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_LOGOUT;
 
     ret = strncmp(input, INV, sizeof(INV));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return find_inv_cmd(input);
 
     ret = strncmp(input, ROOM_L, sizeof(ROOM_L));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return find_room_cmd(input+5);
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_PM;
 
     /* This needs to be AFTER comparing ROOM_L since both start with /r */
     ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_PR;
 
     ret = strncmp(input, VOID, sizeof(PRIV_REP));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_VOID;
 
     ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC));
-    if (ret != RC_ERR)
+    if (ret == 0)
         return RC_EXIT;
 
-    ret = strncmp(input, "/d ", 3);
-    if (ret != RC_ERR)
-        return find_debug_cmd(input+3);
 
     return RC_MSG;
 } /* end parse_args */

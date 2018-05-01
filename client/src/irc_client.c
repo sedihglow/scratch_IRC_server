@@ -32,7 +32,7 @@ struct_irc_info* init_irc_info(void)
 /* TODO: Note, not a ** so dest does not get set to NULL, memory is just freed, 
  * .... assuming i know what the fuck pointers do. ;) aka test the shit
  */
-void free_irc_info(struct_irc_info *dest)
+void irc_free_info(struct_irc_info *dest)
 {
     cli_free_info(dest->client);
     com_free_serv_info(dest->serv_info);
@@ -42,22 +42,31 @@ void free_irc_info(struct_irc_info *dest)
     dest = NULL;
 }
 
-/*******************************************************************************
- * TODO: Cleaning up on error before exiting not implemented yet. Mallocs not
- *       freed on error yet. Waiting until i know how i want to handle them
- *       since in user space.
- ******************************************************************************/
+
 void irc_client(void)
 {
     struct_irc_info *irc_info; 
-    bool exit = false;
+    int ret;
+    int current_cmd;
+    char *input; /* input is likely to be handled in a thread. */
+    bool debug_on = false; /* definition is debug.h, should be an argv. */
 
     irc_info = init_irc_info();
     if (!irc_info)
         errExit("irc_client: init_irc_info failed.");
 
+    init_client_comm(irc_info->serv_info);
+
     /* TODO: Figure out exit flag after you figure out getting input from user */
+    bool exit = true; // temp here while testing shit
     while (!exit) {
+        /* Start debug cmd block, NOTE: Parsing might be handled in a thread */
+        if (debug_on) {
+            ret = strncmp(input, "/d ", 3);
+            if (ret == 0) {
+                current_cmd = find_debug_cmd(input);
+            }
+        } /* End debug cmd block */
 
     }
 
@@ -68,5 +77,5 @@ void irc_client(void)
      *        for messages will change and likely include signals/processes or
      *        exceptions.
      *************************************************************************/
-} // end irc_client()
+} /* end irc_client() */
 /****** EOF ******/

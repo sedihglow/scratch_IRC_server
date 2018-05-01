@@ -25,11 +25,11 @@
 #define B_ADD    "/b add "     // /b add <name>    : same as above
 #define B_R      "/b r "       // /b r <name>      : Remove from block list
 #define B_REM    "/b remove "  // /b remove <name> : same as above
-#define WHO      "/who "       // /who <name>      : Search if a user exists
 
 /******************************************************************************
  *                      Chat Room Definitions
  ******************************************************************************/
+#define WHO      "/who "          // /who <name>      : Search if a user exists
 #define JOIN     "/join "         // /join <channel>  : Join dat channel
 #define EXIT_IRC "/exit "         // /exit            : Get the fuck out
 #define VOID     "/leave "        // /leave           : Go to the void
@@ -63,26 +63,6 @@
 #define RC_PM     0x1000
 #define RC_PR     0x2000
 #define RC_ERR    0x4000
-
-/******************************************************************************
- *                      Debug Definitions TODO: Maybe? move to a debug header? 
- ******************************************************************************/
-#define D_PRINT   "/d yp"      // Turn on debug print statments, sent by pm?
-#define D_NOPRINT "/d np"      // Turn off debug print statments
-#define D_NETWORK "/d network" // Print any relevent network/comm data
-#define D_RLIST   "/d rl"      // Print all existing rooms (even private)
-#define D_FLIST   "/d fl"      // /d fl <name> : Print users friend list.
-#define D_BLIST   "/d bl"      // /d bl <name> : Print users block list
-#define D_FUNCT   "/d funct"   // /d funct <funct> <args...> : exec funct
-
-#define DRC_PRING    0x0
-#define DRC_NOPRINT  0x1
-#define DRC_NETWORK  0x2
-#define DRC_RLIST    0x4
-#define DRC_FLIST    0x8
-#define DRC_BLIST    0x10
-#define DRC_FUNCT    0x20
-#define DRC_ERR      0x40
 
 /******************************************************************************
  *                      Non Command Definitions

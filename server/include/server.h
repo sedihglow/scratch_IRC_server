@@ -4,7 +4,7 @@
  * Written by: James Ross
  ******************************************************************************/
 
-#include "../../shared/include/irc_utility.h"
+#include "irc_comm.h"
 
 #define LQ_SIZE 15  /* the backlog queue suggested in listen() */
 

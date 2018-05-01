@@ -6,6 +6,7 @@
 
 #include "client.h"
 #include "comm.h" // holds struct_serv_info
+#include "debug.h"
 
 typedef struct irc_info {
     struct_client_info *client;

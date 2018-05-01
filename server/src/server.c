@@ -5,7 +5,7 @@
  * Written by: James Ross
  ******************************************************************************/
 
-#include "../include/server.h"
+#include "server.h"
 
 int open_connection(struct_serv_info *serv_info)
 {
@@ -23,7 +23,7 @@ int open_connection(struct_serv_info *serv_info)
 
     /* bind socket */
     if (_usrUnlikely(bind(sockfd, sock_info, sock_info_size) == FAILURE)){
-        /* TODO: error handle, retry connection till timeout. */
+        /* TODO: error handle */
         err_msg("open_connection: Failed on bind() socket");
         return FAILURE;
     }

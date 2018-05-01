@@ -5,7 +5,7 @@
  * Written by: James Ross
  ******************************************************************************/
 
-#include "../include/irc_server.h"
+#include "irc_server.h"
 
 /*******************************************************************************
  * TODO: Cleaning up on error before exiting not implemented yet. Mallocs not
@@ -23,7 +23,8 @@ void irc_server(void)
     struct_cli_info    *cli_info;
     struct sockaddr_in *serv_sock;
   
-    serv_info = CALLOC(struct_serv_info);
+    serv_info = _com_init_serv_info();
+
     cli_info  = CALLOC(struct_cli_info);
     if(_usrUnlikely(!serv_info || !cli_info)){
         errExit("irc_server: Malloc failed on serv/cli info");
@@ -32,7 +33,7 @@ void irc_server(void)
     size = sizeof(struct sockaddr_in);
 
     /* set a pointer for easier access to server socket_info struct */
-    serv_sock = &(serv_info->socket_info);
+    serv_sock = serv_info->socket_info;
 
     /* init serv_info  */
     serv_info->domain    = NET_DOMAIN;

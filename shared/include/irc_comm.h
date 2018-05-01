@@ -16,9 +16,9 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.0.0.171"
-#define _COM_SERV_LEN    11//sizeof(SERV_ADDR)
-#define _COM_SERV_PORT   60000             /* port listening on server */
+#define _COM_SERV_ADDR   "10.200.249.49"
+#define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
+#define _COM_SERV_PORT   50000             /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */
@@ -65,6 +65,12 @@ typedef struct stream_io{
     size_t start;
     size_t end;
 } struct_io_ring;
+
+
+struct_serv_info* _com_init_serv_info(void);
+struct_io_ring* _com_init_io_ring(void);
+void _com_free_serv_info(struct_serv_info *dest);
+void _com_free_io_ring(struct_io_ring *dest);
 
 /******************************************************************************* 
  * TODO: Maybe make these functions since they are long, though my current

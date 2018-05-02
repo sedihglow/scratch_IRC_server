@@ -136,6 +136,7 @@ struct_client_info* cli_init_info(void)
         err_msg("cli_init_info: calloc failure - room.");
         return NULL;
     }
+
     init->name = CALLOC_ARRAY(char, NAME_BUFF);
     if (!init->name) {
         err_msg("cli_init_info: calloc failure - name.");
@@ -149,7 +150,7 @@ struct_client_info* cli_init_info(void)
     }
 
     init->f_list->list = CALLOC_ARRAY(char*, F_MAX);
-    if (!init->room) {
+    if (!init->f_list->list) {
         err_msg("cli_init_info: calloc failure - **list.");
         return NULL;
     }
@@ -170,15 +171,12 @@ void cli_free_info(struct_client_info *dest)
     int i;
 
     room_free_state(dest->room);
-    
+
     /* free flist->list indecies */
     for (i=0; i < F_MAX; ++i)
         free(dest->f_list->list[i]);
 
-    FREE_ALL(dest->room, dest->name, dest->f_list->list, dest->f_list);
-    dest->room   = NULL;
-    dest->name   = NULL;
-    dest->f_list = NULL;
+    FREE_ALL(dest->room, dest->name, dest->f_list->list, dest->f_list, dest);
 }
 
 /*******************************************************************************

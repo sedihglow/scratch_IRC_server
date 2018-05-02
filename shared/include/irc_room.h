@@ -20,6 +20,7 @@
 #define _H_STR_LEN_MAX  255 // for comparison before additional allocation
 #define _R_NAME_LEN_MAX 20  // room name max
 #define _R_PW_LEN_MAX   25  // passwords up to 25 characters for private rooms
+#define _R_DFLT_ROOM    "void" // defualt room is the void ~ ~
 
 /* what a room is */
 typedef struct room_info {

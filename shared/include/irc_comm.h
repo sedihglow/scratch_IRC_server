@@ -18,7 +18,7 @@
 /* Server connectivity information */
 #define _COM_SERV_ADDR   "10.200.249.49"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   50000             /* port listening on server */
+#define _COM_SERV_PORT   60000             /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */

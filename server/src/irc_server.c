@@ -18,10 +18,9 @@ void irc_server(void)
 {
     char rx[IO_BUFF] = {'\0'}; /* TODO: May be temp, evaluate on implementation */
 
-    socklen_t          size;
+    socklen_t size = sizeof(struct sockaddr_in);
     struct_serv_info   *serv_info;
     struct_cli_info    *cli_info;
-    struct sockaddr_in *serv_sock;
   
     serv_info = _com_init_serv_info();
 
@@ -30,54 +29,12 @@ void irc_server(void)
         errExit("irc_server: Malloc failed on serv/cli info");
     }
 
-    size = sizeof(struct sockaddr_in);
+    init_server_comm(serv_info);
 
-    /* set a pointer for easier access to server socket_info struct */
-    serv_sock = serv_info->socket_info;
-
-    /* init serv_info  */
-    serv_info->domain    = NET_DOMAIN;
-    serv_info->pcol      = IP_PROTOCOL;
-    serv_info->sock_type = SOCK_TYPE;
-
-    /* dot to binary representation */
-    if(inet_pton(NET_DOMAIN, SERV_ADDR, &serv_info->addr) != 1){
-        if(errno){
-            errExit("irc_server: inet_pton failed to convert IP to binary "
-                    "network order");
-        }
-        errnumExit(EINVAL, "irc_server: Invalid network address string");
-    }
-
-    /* init dot representation address */
-    serv_info->dot_addr = CALLOC_ARRAY(char, SERV_LEN);
-    if(_usrUnlikely(!serv_info->dot_addr)){
-        errExit("irc_server: malloc failure dot_addr");
-    }
-
-    strncpy(serv_info->dot_addr, SERV_ADDR, strlen(SERV_ADDR));
-
-    /* set socket address information for struct sockAddr_in */
-    serv_sock->sin_family      = NET_DOMAIN;
-    serv_sock->sin_addr.s_addr = serv_info->addr;
-
-    /* convert port to network order */
-    serv_sock->sin_port = serv_info->port = htons(SERV_PORT);
-
-    /* open_connection sets serv_info->sockfd and initiates listen */
-    if(_usrUnlikely(open_connection(serv_info) == FAILURE)){
-        errExit("irc_server: Initial connection to network failed");
-    }
-
-    /**************************************************************************
-     * TODO: Sending message through port for initial testing. Implementation
-     *        for messages will change and likely include signals/processes or
-     *        exceptions.
-     *        trying to recieve something and reply, just a single one to start
-     *************************************************************************/
-  
-    cli_info->sockfd = accept(serv_info->sockfd, (void*) &cli_info->socket_info, &size);
-    if(_usrUnlikely(cli_info->sockfd == FAILURE)){
+    /* TODO: Pretty sure while loop goes here */
+    cli_info->sockfd = accept(serv_info->sockfd, 
+                             (struct sockaddr*) &cli_info->socket_info, &size);
+    if(_usrUnlikely(cli_info->sockfd == FAILURE)) {
         errExit("irc_server: accepting connection failed.\n");
     }
 

@@ -22,16 +22,14 @@ struct_irc_info* init_irc_info(void)
         return NULL;
 
     init->client    = cli_init_info();
+    if (!init->client)
+        return NULL;
     init->serv_info = com_init_serv_info();
     init->tx        = com_init_io_ring();
     init->rx        = com_init_io_ring();
-
     return init;
-}
+} /* end init_irc_info() */
 
-/* TODO: Note, not a ** so dest does not get set to NULL, memory is just freed, 
- * .... assuming i know what the fuck pointers do. ;) aka test the shit
- */
 void irc_free_info(struct_irc_info *dest)
 {
     cli_free_info(dest->client);
@@ -39,9 +37,7 @@ void irc_free_info(struct_irc_info *dest)
     com_free_io_ring(dest->tx);
     com_free_io_ring(dest->rx);
     free(dest);
-    dest = NULL;
-}
-
+} /* end irc_free_info() */
 
 void irc_client(void)
 {
@@ -57,6 +53,7 @@ void irc_client(void)
 
     init_client_comm(irc_info->serv_info);
 
+#if 0
     /* TODO: Figure out exit flag after you figure out getting input from user */
     bool exit = true; // temp here while testing shit
     while (!exit) {
@@ -69,6 +66,9 @@ void irc_client(void)
         } /* End debug cmd block */
 
     }
+#endif
+
+    ret = send_to_server(irc_info->serv_info->sockfd, "void", sizeof("void"), 0);
 
     irc_free_info(irc_info);
 

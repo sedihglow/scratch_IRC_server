@@ -8,7 +8,6 @@
 #define _COMM_H_
 
 #include "irc_comm.h" // NOTE: holds struct_server_info and struct_io_ring
-#include "utility_sys.h"
 
 
 struct_serv_info* com_init_serv_info(void);

@@ -6,7 +6,6 @@
 
 #include "irc_comm.h"
 
-
 /* servers information on the client it is communicating with. */
 typedef struct client_info{
     char *name;

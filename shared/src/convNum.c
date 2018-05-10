@@ -186,13 +186,18 @@ int convInt(const char *arg, int32_t flags, const char *varName)/*#{{{*/
 
     res = convNum("convInt", arg, flags, varName);
 
+    if (errno)
+        return 0;
+
     /* make sure the converted number is in the range of an int */
     if(res > INT_MAX || res < INT_MIN){
         if(flags & CN_NOEXIT_){
+            errno = EINVAL;
             fprintf(stderr,"\nInteger was out of range\n");
             return 0;
+        } else {
+            convFail("convInt", "integer out of range", arg, varName);
         }
-        else convFail("convInt", "integer out of range", arg, varName);
     }
     return (int) res;
 } /* end getInt #}}}*/

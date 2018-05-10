@@ -47,7 +47,7 @@ int* irc_add_fd_list(struct_irc_info *info, int newfd)
     if (!info) {
         errno = EINVAL;
         errnum_msg(EINVAL, "irc_add_fd_list: info == NULL");
-        return NULL;
+        return info->full_fd_list;
     }
 
     if (!info->full_fd_list && info->num_fds == 0) {
@@ -72,8 +72,9 @@ int* irc_add_fd_list(struct_irc_info *info, int newfd)
 } /* end add_to_fd_list() */
 
 /*******************************************************************************
- *
  *  sets full_fd_list to null if deallocation happens
+ *
+ *  on error, errno is set and it returns the previous list in info
  ******************************************************************************/
 int* irc_remove_fd_list(struct_irc_info *info, int fd)
 {
@@ -85,17 +86,17 @@ int* irc_remove_fd_list(struct_irc_info *info, int fd)
     if (!info) {
         errno = EINVAL;
         errnum_msg(EINVAL, "irc_remove_fd_list: info == NULL");
-        return NULL;
+        return info->full_fd_list;
     }
 
     if (!info->full_fd_list && info->num_fds == 0) {
         noerr_msg("num_fd is 0 or full_fd_list was null and empty");
-        return NULL;
+        return info->full_fd_list;
     }
 
     if (info->num_fds == 1) {
         free(info->full_fd_list);
-        return NULL;
+        return info->full_fd_list;
     }
 
     old_list = info->full_fd_list;
@@ -182,12 +183,16 @@ void irc_free_info(struct_irc_info *irc_info)
  ******************************************************************************/
 void irc_server(void)
 {
-    char rx[IO_BUFF] = {'\0'}; /* TODO: temp buffer during dev. */
+    char rx[IO_BUFF] = {'\0'}; /* TODO: likely temp buffer during dev. */
+    struct_cli_message *cli_msg; /* new incoming client message */
 
+    /* irc_info w/ pointers for faster access into irc_info */
     struct_irc_info  *irc_info;
     struct_serv_info *irc_serv_info; /* for better access to irc_info member */
     struct_cli_info  *cli_info; /* TODO: Might rename to new_cli on impl. */
     unsigned int size = sizeof(struct sockaddr_in);
+
+    int i;
 
     /* select stuff */
     int ret;
@@ -202,19 +207,6 @@ void irc_server(void)
 
     irc_serv_info = irc_info->serv_info;
 
-
-
-    /********************* TODO: START MEM TESTING ******************/
-    /* initialize full_fd_list, adds the server socket file descriptor */
-    irc_info->full_fd_list = irc_add_fd_list(irc_info, irc_info->serv_info->sockfd);
-    irc_info->full_fd_list = irc_remove_fd_list(irc_info, irc_info->serv_info->sockfd);
-
-    irc_free_info(irc_info);
-    free(cli_info);
-    irc_info = NULL;
-    return;
-    /******************** END MEM TESTING **************/
-
     init_server_comm(irc_serv_info);
 
     /* initialize full_fd_list, adds the server socket file descriptor */
@@ -222,8 +214,8 @@ void irc_server(void)
                                              irc_info->serv_info->sockfd);
 
     /* 
-     * start 1 greater than # of descriptors. Starting garunteed descriptors
-     * are stdin, stdout, stderr, server socket fd.
+     * start nfds to 1 greater than # of descriptors. Starting garunteed 
+     * descriptors are stdin, stdout, stderr, server socket fd.
      */
     irc_info->num_fds = 1; /* the server fd */
     nfds = 5;
@@ -243,7 +235,9 @@ void irc_server(void)
             continue; 
 
         /* if server socket is ready for reading with incoming transmittion */
+        /* TODO: Make this if-statment a function i thinks. */
         if (FD_ISSET(irc_serv_info->sockfd, &readfds)) {
+            /* accept new client message */
             cli_info->sockfd = accept(irc_serv_info->sockfd, 
                                      (struct sockaddr*) &cli_info->socket_info, 
                                      &size);
@@ -252,18 +246,41 @@ void irc_server(void)
 
             ++(irc_info->num_fds); /* increment fd count */
             ++nfds;
-            
-            // receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);
+
+            receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 
             /* make sure message is a LOGIN message */
-            
-            /* Check if the connections name is taken or not. */
+            cli_msg = parse_cli_message(rx);
+            if (!cli_msg) {
+                noerr_msg("Invalid message or command.");
+                /* TODO: Send a reply letting client know they are shit */
+                
+                FREE_ALL(cli_msg->cli_name, cli_msg->msg, cli_msg);
+                cli_msg = NULL;
+                /* Check if the connections name is taken or not in else-if */
+            } else if (!serv_find_client(cli_msg->cli_name, 
+                                         irc_info->cli_list, 
+                                         irc_info->num_fds)) {
+                /* name is not taken. add client to lists. */
+                /* TODO: If statments error checking adding to lists */
+                irc_info->full_fd_list = irc_add_fd_list(irc_info,
+                                                         cli_info->sockfd);
 
-            /* If it is not, send a message telling the client. */
+                /* note: serv_add_client sets cli_info to NULL */
+                irc_info->cli_list = serv_add_client(&cli_info, 
+                                                     irc_info->cli_list, 
+                                                     irc_info->num_clients);
+                ++(irc_info->num_clients);
+                    
+                /* TODO: place new client in default room. */
 
-            /* If it is, add client to the active client list. */
 
-            /* place new client in the default room */
+            } else {
+                    noerr_msg("irc_server: New clients name already exists");
+                    /* TODO: Send a replay letting client know name is taken */
+            }
+        } else { /* process current clients command/message */
+
 
         }
 

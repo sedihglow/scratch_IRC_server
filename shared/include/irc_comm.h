@@ -34,6 +34,8 @@
 
 #define _NAME_SIZE_MAX  11    // includes '\0'
 
+#define MSG_TYPE_SIZE 2
+
 /******************************************************************************
  *                      Command Code Definition
  ******************************************************************************/
@@ -66,6 +68,14 @@ typedef struct server_info {
     int sockfd;          /* socket file descriptior */
     struct sockaddr_in *socket_info; /* socket API struct, IPV4 */
 } struct_serv_info;
+
+
+typedef struct parsed_cli_message {
+    char *msg;
+    char *cli_name;
+    int  type;
+} struct_cli_message;
+
 
 
 /*

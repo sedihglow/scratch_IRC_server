@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/times.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>

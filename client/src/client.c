@@ -131,7 +131,7 @@ struct_client_info* cli_init_info(void)
         return NULL;
     }
 
-    init->room = room_init_state(NAME_BUFF);
+    init->room = room_init_state();
     if (!init->room) {
         err_msg("cli_init_info: calloc failure - room.");
         return NULL;

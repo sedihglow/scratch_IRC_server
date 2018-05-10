@@ -69,6 +69,7 @@ void irc_client(void)
 #endif
 
     ret = send_to_server(irc_info->serv_info->sockfd, "void", sizeof("void"), 0);
+    printf("after send");
 
     irc_free_info(irc_info);
 

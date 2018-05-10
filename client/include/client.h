@@ -43,33 +43,13 @@
 #define PRIV_MSG "/pm "    // /pm <name> "msg" : Send the private shit
 #define PRIV_REP "/r "     // /r "msg"         : Reply to previos PM 
 
-/******************************************************************************
- *                      Command Code Definition
- ******************************************************************************/
-#define RC_MSG    0x0
-#define RC_FA     0x1
-#define RC_FL     0x2
-#define RC_FR     0x3
-#define RC_BL     0x4
-#define RC_BA     0x8
-#define RC_BR     0x10
-#define RC_WHO    0x20
-#define RC_JOIN   0x40
-#define RC_EXIT   0x80
-#define RC_VOID   0x100
-#define RC_LOGOUT 0x200
-#define RC_INV    0x400
-#define RC_RL     0x800
-#define RC_PM     0x1000
-#define RC_PR     0x2000
-#define RC_ERR    0x4000
 
 /******************************************************************************
  *                      Non Command Definitions
  ******************************************************************************/
 #define IO_STR_LEN_MAX H_STR_LEN_MAX // definition found in irc_room.h
 #define IO_MAX    225   // max characters a user can input for a message
-#define NAME_BUFF 14    // includes '\0'
+#define NAME_BUFF _NAME_SIZE_MAX  14    // includes '\0'
 #define F_MAX     30    // 30 friends max. Too popular too bad. 
 
 typedef struct friend_list {
@@ -77,7 +57,8 @@ typedef struct friend_list {
 } struct_flist;
 
 typedef struct client_info {
-    struct_room_state *room;
+    struct_room_state *room;  /* gonna have to grow and shrink */
+    int room_count; /* number of rooms the client is in. */
     char *name;
     struct_flist *f_list;
 } struct_client_info;

@@ -20,8 +20,8 @@ typedef struct room_state {
     struct_room_info *prev_buff; // TODO: might not need this on implementation 
 } struct_room_state;
 
-struct_room_state* room_init_state(size_t user_name_size);
-struct_room_info*  room_init_info(size_t user_name_size);
+struct_room_state* room_init_state(void);
+struct_room_info*  room_init_info(void);
 void room_free_state(struct_room_state *dest);
 void room_free_info(struct_room_info *dest);
 

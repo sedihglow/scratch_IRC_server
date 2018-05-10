@@ -16,7 +16,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.200.249.49"
+#define _COM_SERV_ADDR   "10.200.249.107"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
 #define _COM_SERV_PORT   60000             /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
@@ -31,6 +31,30 @@
                             */
 
 #define IO_RING_SIZE 500 // size of ring buffer
+
+#define _NAME_SIZE_MAX  11    // includes '\0'
+
+/******************************************************************************
+ *                      Command Code Definition
+ ******************************************************************************/
+#define RC_MSG    0x0
+#define RC_FA     0x1
+#define RC_FL     0x2
+#define RC_BL     0x3
+#define RC_BA     0x4
+#define RC_BR     0x5
+#define RC_WHO    0x6
+#define RC_JOIN   0x7
+#define RC_EXIT   0x8
+#define RC_VOID   0x9
+#define RC_LOGOUT 0xA
+#define RC_INV    0xB
+#define RC_RL     0xC
+#define RC_PM     0xD
+#define RC_PR     0xE
+#define RC_ERR    0xF
+#define RC_FR     0x10
+#define RC_LOGON  0x11
 
 typedef struct server_info {
     in_addr_t addr;      /* network binary of server address */

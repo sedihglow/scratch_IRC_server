@@ -16,7 +16,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.200.249.107"
+#define _COM_SERV_ADDR   "10.0.0.169"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
 #define _COM_SERV_PORT   60000             /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
@@ -57,6 +57,9 @@
 #define RC_ERR    0xF
 #define RC_FR     0x10
 #define RC_LOGON  0x11
+#define RC_R_MSG  0x12
+#define RC_LEAVE  0x13
+#define RC_HB     0x14
 
 typedef struct server_info {
     in_addr_t addr;      /* network binary of server address */
@@ -69,21 +72,11 @@ typedef struct server_info {
     struct sockaddr_in *socket_info; /* socket API struct, IPV4 */
 } struct_serv_info;
 
-
 typedef struct parsed_cli_message {
-    char *msg;
     char *cli_name;
     int  type;
+    char *msg;
 } struct_cli_message;
-
-
-
-/*
-typedef struct workspace_buffer{
-    char buff[WORK_BUFF];
-    size_t len;
-} struct_work_buff;
-*/
 
 /****************************************************************************** 
  * DEVELOPMENT NOTE: This is a generic ring buffer but it is IO since COM
@@ -100,12 +93,11 @@ typedef struct stream_io{
     size_t end;
 } struct_io_ring;
 
-
 struct_serv_info* _com_init_serv_info(void);
 struct_io_ring* _com_init_io_ring(void);
 void _com_free_serv_info(struct_serv_info *dest);
 void _com_free_io_ring(struct_io_ring *dest);
-
+void _com_free_cli_message(struct_cli_message *rem);
 /******************************************************************************* 
  * TODO: Maybe make these functions since they are long, though my current
  * protocol with them just calls a seperate stack frame and just calls the

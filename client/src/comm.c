@@ -65,6 +65,14 @@ static int connect_to_server(struct_serv_info *serv_info)
     return SUCCESS;
 } /* end connect to server */
 
+/******************************************************************************
+ * TODO:
+ *
+ * Memory not cleaned up on exit. 
+ *
+ * Replace errExit functions and clean up memory in irc_server before killing
+ * program
+ ******************************************************************************/
 int init_client_comm(struct_serv_info *serv_info)
 {
     struct sockaddr_in *addr_tmp = serv_info->socket_info;
@@ -111,5 +119,4 @@ ssize_t receive_from_server(int sockfd, char *rx, size_t len, int flags)
 {
     return socket_receive(sockfd, rx, len, flags);
 } /* end recieve_from_server */
-
 /******* EOF ******/

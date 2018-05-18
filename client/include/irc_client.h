@@ -16,6 +16,10 @@ typedef struct irc_info {
 } struct_irc_info;
 
 /* Function executed by main to run the irc client */
+int parse_args(char *input);
+void* handle_server_requests(void *args);
+char* get_user_input(void);
+
 struct_irc_info* init_irc_info(void);
 void irc_free_info(struct_irc_info *dest);
 void irc_client(void);

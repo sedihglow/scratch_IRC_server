@@ -9,6 +9,8 @@
 
 #include "room.h"
 
+
+#define LONGEST_CMD_LEN (sizeof(F_REM))
 /******************************************************************************
  *                      Friend List Definitions
  ******************************************************************************/
@@ -32,11 +34,16 @@
 #define WHO      "/who "          // /who <name>      : Search if a user exists
 #define JOIN     "/join "         // /join <channel>  : Join dat channel
 #define EXIT_IRC "/exit "         // /exit            : Get the fuck out
-#define VOID     "/leave "        // /leave           : Go to the void
+#define VOID     "/void"          // /void            : Go to the void
+ /* TODO: When leave happens, 
+  *         The user is currently displaying that room.
+  *             - change what room is being displayed, let server know
+  *             - If it is the last room the user is in, go to VOID
+  */
+#define LEAVE    "/leave"         // /leave <channel> : leave a channel
 #define LOG_OUT  "/logout "       //                  : Back to login screen.
 #define INVITE   "/invite "       // /invite <name>   : Invite to current room 
 #define INV      "/inv "          // /inv <name>      : Same as above
-// TODO: THERE SHOULD BE A BAN FROM CHANNEL COMMAND. ... should be... ;)
 #define ROOM_L   "/room l "       // /channel l       : List all public channels
 #define ROOM_LST "/room list "    //                  : Same as above
 
@@ -48,8 +55,6 @@
  *                      Non Command Definitions
  ******************************************************************************/
 #define IO_STR_LEN_MAX H_STR_LEN_MAX // definition found in irc_room.h
-#define IO_MAX    225   // max characters a user can input for a message
-#define NAME_BUFF _NAME_SIZE_MAX  14    // includes '\0'
 #define F_MAX     30    // 30 friends max. Too popular too bad. 
 
 typedef struct friend_list {
@@ -58,7 +63,7 @@ typedef struct friend_list {
 
 typedef struct client_info {
     struct_room_state *room;  /* gonna have to grow and shrink */
-    int room_count; /* number of rooms the client is in. */
+    int room_count;           /* number of rooms the client is in. */
     char *name;
     struct_flist *f_list;
 } struct_client_info;

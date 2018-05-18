@@ -140,4 +140,12 @@ struct_cli_info* serv_find_client(char *find, struct_cli_info **fdlist,
     
     return NULL;
 } /* end serv_find_client */
+
+
+int serv_add_to_room(struct_room_list *rooms, char *room_name)
+{
+    return room_add_user(&rooms->rooms, room_name); 
+} /* end serv_add_to_room */
+
+
 /******** EOF *********/

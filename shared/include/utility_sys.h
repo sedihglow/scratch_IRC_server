@@ -118,10 +118,10 @@
 } /* end PARSE_BUFF */
 
 /* Clears STDIN using read() */
-#define RD_CLR_STDIN() ({                                                        \
+#define RD_CLR_STDIN() {                                                        \
     char __ch = {'\0'};                                                        \
     while(read(STDIN_FILENO, (void*)&__ch, 1) && __ch != '\n' && __ch != EOF); \
-}) /* end RD_CLR_STDIN */
+} /* end RD_CLR_STDIN */
 
 /*******************************************************************************
  * TODO: Adjust this macro or make an alternate that can call a function with

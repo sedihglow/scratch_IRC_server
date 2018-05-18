@@ -21,6 +21,8 @@
 #define _R_NAME_LEN_MAX 20  // room name max
 #define _R_PW_LEN_MAX   25  // passwords up to 25 characters for private rooms
 #define _R_DFLT_ROOM    "void" // defualt room is the void ~ ~
+#define _R_NAME_MAX     11    // includes null value. name only 10 char max.
+
 
 /* what a room is */
 typedef struct room_info {
@@ -38,6 +40,9 @@ typedef struct room_info {
 struct_room_info* _room_init_info(bool pub, char *pw);
 void _room_free_info(struct_room_info *dest);
 struct_room_info* _room_get_copy(struct_room_info *src);
+int _room_add_user(struct_room_info *room, char *name); 
 
+int _room_add_user(struct_room_info *room, char *name);
+int _room_remove_user(struct_room_info *room, char *cli_name);
 #endif
 /**** EOF ****/

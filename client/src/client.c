@@ -7,111 +7,6 @@
 #include "client.h"
 
 /******************************************************************************* 
- *                          Static Functions
- ******************************************************************************/
-
-
-/*******************************************************************************
- * TODO: NOTE: Aware of magic numbrs and redundant compares copied into other
- *             functions such as "add ", "a ",etc,etc. Not sure what to do bout
- *             it that would be any more efficient.
- *
- *             Maybe make them each an inline? :/ w/e
- ******************************************************************************/
-
-static int find_fcmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "add ", 4);
-    if (ret == 0)
-        return RC_FA;
-
-    ret = strncmp(input, "a ", 2);
-    if (ret == 0)
-        return RC_FA;
-
-    ret = strncmp(input, "list ", 5);
-    if (ret == 0)
-        return RC_FL;
-
-    ret = strncmp(input, "l ", 2);
-    if (ret == 0)
-        return RC_FL;
-
-    ret = strncmp(input, "remove ", 7);
-    if (ret == 0)
-        return RC_FR;
-
-    ret = strncmp(input, "r ", 2);
-    if (ret == 0)
-        return RC_FR;
-
-    return RC_ERR;
-} /* end find_fcmd */
-
-static int find_bcmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "l ", 2);
-    if (ret == 0)
-        return RC_BL;
-
-    ret = strncmp(input, "list ", 5);
-    if (ret == 0)
-        return RC_BL;
-
-    ret = strncmp(input, "a ", 2);
-    if (ret == 0)
-        return RC_BA;
-
-    ret = strncmp(input, "add ", 4);
-    if (ret == 0)
-        return RC_BA;
-
-    ret = strncmp(input, "r ", 2);
-    if (ret == 0)
-        return RC_BR;
-
-    ret = strncmp(input, "remove ", 6);
-    if (ret == 0)
-        return RC_BR;
-
-    return RC_ERR;
-} /* end find_bcmd */
-
-static int find_inv_cmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "inv ", 4);
-    if (ret == 0)
-        return RC_INV;
-
-    ret = strncmp(input, "invite ", 7);
-    if (ret == 0)
-        return RC_INV;
-
-    return RC_ERR;
-}
-
-static int find_room_cmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "invite ", 7);
-    if (ret == 0)
-        return RC_INV;
-      
-    ret = strncmp(input, "invite ", 7);
-    if (ret == 0)
-        return RC_INV;
-
-    return RC_ERR;
-} /* end find_room_cmd */
-
-/******************************************************************************* 
  *                          Header Functions
  ******************************************************************************/
 
@@ -137,11 +32,13 @@ struct_client_info* cli_init_info(void)
         return NULL;
     }
 
-    init->name = CALLOC_ARRAY(char, NAME_BUFF);
-    if (!init->name) {
-        err_msg("cli_init_info: calloc failure - name.");
-        return NULL;
-    }
+    /* TODO: See next TODO over F list
+        init->name = CALLOC_ARRAY(char, NAME_BUFF);
+        if (!init->name) {
+            err_msg("cli_init_info: calloc failure - name.");
+            return NULL;
+        }
+    */
 
     init->f_list = CALLOC(struct_flist);
     if (!init->f_list) {
@@ -149,6 +46,8 @@ struct_client_info* cli_init_info(void)
         return NULL;
     }
 
+
+/*  TODO: Do the lame allocate deallocate thing with this stuff too.
     init->f_list->list = CALLOC_ARRAY(char*, F_MAX);
     if (!init->f_list->list) {
         err_msg("cli_init_info: calloc failure - **list.");
@@ -162,9 +61,10 @@ struct_client_info* cli_init_info(void)
             return NULL;
         }
     }
+*/
 
     return init;
-}
+} /* end cli_init_info() */
 
 void cli_free_info(struct_client_info *dest)
 {
@@ -173,77 +73,15 @@ void cli_free_info(struct_client_info *dest)
     room_free_state(dest->room);
 
     /* free flist->list indecies */
-    for (i=0; i < F_MAX; ++i)
-        free(dest->f_list->list[i]);
+    for (i=0; i < F_MAX; ++i) {
+        if (dest->f_list->list[i])
+            free(dest->f_list->list[i]);
+        else
+            break;
+    }
 
     FREE_ALL(dest->room, dest->name, dest->f_list->list, dest->f_list, dest);
 }
-
-/*******************************************************************************
- * Parse's the input of the client. Finds what type of input it was, msg or 
- * command then which command if applicable.
- *
- * Returns identifier showing which type of input it was.
- *
- * Some functions pass an incrented address so we dont compare the same shit
- * twice. Only one that doesnt in /inv vs /invite since there is no space
- * seperator.
- *
- * TODO: This might be threaded and called after input, on the thread that runs 
- *       the input waiting. Then pass this return value to main thread.
- ******************************************************************************/
-int parse_args(char *input)
-{
-    int ret = 0;
-
-    ret = strncmp(input, "/f ", 3);
-    if (ret == 0)
-        return find_fcmd(input+3);
-
-    ret = strncmp(input, "/b ", 3);
-    if (ret == 0)
-        return find_bcmd(input+3);
-
-    ret = strncmp(input, WHO, sizeof(WHO));
-    if (ret == 0)
-        return RC_WHO;
-
-    ret = strncmp(input, JOIN, sizeof(JOIN));
-    if (ret == 0)
-        return RC_JOIN;
-
-    ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT));
-    if (ret == 0)
-        return RC_LOGOUT;
-
-    ret = strncmp(input, INV, sizeof(INV));
-    if (ret == 0)
-        return find_inv_cmd(input);
-
-    ret = strncmp(input, ROOM_L, sizeof(ROOM_L));
-    if (ret == 0)
-        return find_room_cmd(input+5);
-
-    ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG));
-    if (ret == 0)
-        return RC_PM;
-
-    /* This needs to be AFTER comparing ROOM_L since both start with /r */
-    ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP));
-    if (ret == 0)
-        return RC_PR;
-
-    ret = strncmp(input, VOID, sizeof(PRIV_REP));
-    if (ret == 0)
-        return RC_VOID;
-
-    ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC));
-    if (ret == 0)
-        return RC_EXIT;
-
-
-    return RC_MSG;
-} /* end parse_args */
 
 /*******************************************************************************
  * Command: /f a

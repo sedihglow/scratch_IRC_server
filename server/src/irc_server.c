@@ -203,22 +203,14 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
         /* client name taken or reserved, remove from lists */
         noerr_msg("Client name is taken. Try again client person.");
 
-        /* TODO: Realize the hoops i am jumping now. And it brings tears. */
-        cli->name = CALLOC_ARRAY(char, sizeof(DELETE_CLI)+1);
-        if (!cli->name)
-            errExit("irc_accept_new_cli: calloc failure. Download more ram.");
-
-        strcpy(cli->name, DELETE_CLI);
-        /* end hoops */
-
         /* remove fd from fd list, decrement totals */
         irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
         --(irc_info->full_fd_list);
 
         /* remove from client list. Had to utilize dumb string because scope */
-        ret = (void**)serv_remove_client(DELETE_CLI, irc_info->cli_list, 
-                                         irc_info->num_clients);
-        if (ret != NULL)
+        ret = (void**)serv_remove_client(NULL, irc_info->cli_list, 
+                                         irc_info->num_clients, cli->sockfd);
+        if (ret != NULL) 
             irc_info->cli_list = (struct_cli_info**)ret;
 
         --(irc_info->num_clients);
@@ -341,33 +333,42 @@ void irc_server(void)
 } /* end irc_server */
 
 
-int irc_cli_msg_cmd(struct_cli_message *cli_msg)
+int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
     int i, len;
-    char room_name[_R_NAME_MAX] = {\'0'};
+    char room_name[_R_NAME_MAX] = {'\0'};
     char input[MSG_STR_LEN_MAX] = {'\0'};
+    struct_room_info *working_room;
+    struct_cli_info *cli;
     
     /* get current room string */
-    len = strlen(&(cli_msg->msg));
+    len = strlen(cli_msg->msg) + 1; // includes '\0'
     if (len > _R_NAME_MAX) {
         noerr_msg("irc_cli_msg_cmd: Room name provided too long");
         return EINVAL;
     }
-    for (i=0; i < len; ++i) {
-        room_name[i] = cli->msg[i];
+    for (i=0; i < len; ++i)
+        room_name[i] = cli_msg->msg[i];
 
     /* get message for the room */
     for (; i < MSG_STR_LEN_MAX && cli_msg->msg[i] != '\r'; ++i)
         input[i] = cli_msg->msg[i];
 
     /* add new message to room history */
-    room_add_history(irc_info->rooms->rooms, room_name, input);
+    room_add_history(&irc_info->rooms->rooms, room_name, input);
     
+    working_room = room_find(&irc_info->rooms->rooms, room_name);
 
     /* TODO: Send new history information to all clients in the room.
      *       place in buffer and make select read writes as well?
      *       send then.
      */
+    len = working_room->num_users;
+    for (i=0; i < len; ++i) {
+        cli = serv_find_client(working_room->room_users[i], irc_info->cli_list, 
+                         irc_info->num_clients);
+    }
+
 } /* end irc_cli_msg_cmd */
 
 
@@ -399,17 +400,16 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
             /* TODO: Send message to current client telling them they suck */
             return FAILURE;
         }
-
-        /* client successfully joined, named and placed in the void */
-        /* TODO: Send confirmation to client */
-         
     break;
     case RC_MSG:
         /*
          * print out message to current room, listed in msg.
          * msg format RC_MSG: name | type | current room | input 
          */
-
+        if (!(irc_cli_msg_cmd(irc_info, cli_msg))) {
+            /* issue with message */
+            return FAILURE;
+        }
                                     
     /* broadcast to all clients in the room about the message.
      * msg format: RC_MSG | client sending | room name | msg 

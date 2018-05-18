@@ -27,10 +27,13 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
                                   struct_cli_info **old_list, size_t old_size);
 
 struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list, 
-                                     size_t old_size);
+                                     size_t old_size, int sockfd);
 
-struct_cli_info* serv_find_client(char *find, struct_cli_info **fdlist, 
+struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list, 
                                   size_t size);
+
+struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
+                                     size_t size);
 
 /* TODO: Fuctions that call room.c should be here. Will fix scope if time and
  * have irc_server.c call functions out of server.h only.

@@ -81,7 +81,7 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
  *  TODO: Untested 
  ******************************************************************************/
 struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list, 
-                                     size_t old_size)
+                                     size_t old_size, int sockfd)
 {
     unsigned int i, j;
     struct_cli_info **new_list;
@@ -98,8 +98,12 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
     }
     
     new_list = CALLOC_ARRAY(struct_cli_info*, old_size-1);
+    
+    if (name)
+        remove = serv_find_client(name, old_list, old_size);
+    else
+        remove = serv_find_fd_client(sockfd, old_list, old_size);
 
-    remove = serv_find_client(name, old_list, old_size);
     if (!remove) {
         errno = EINVAL;
         noerr_msg("serv_remove_client: client %s not found in client list.");
@@ -128,14 +132,14 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
  * Returns pointer to found client struct on success
  *  TODO: Untested 
  ******************************************************************************/
-struct_cli_info* serv_find_client(char *find, struct_cli_info **fdlist, 
+struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list, 
                                   size_t size)
 {
     unsigned int i;
 
     for (i=0; i < size; ++i) {
-        if (strcmp(fdlist[i]->name, find) == 0)
-            return fdlist[i];
+        if (strcmp(cli_list[i]->name, find) == 0)
+            return cli_list[i];
     }
     
     return NULL;
@@ -147,5 +151,17 @@ int serv_add_to_room(struct_room_list *rooms, char *room_name)
     return room_add_user(&rooms->rooms, room_name); 
 } /* end serv_add_to_room */
 
+struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
+                                     size_t size)
+{
+    unsigned int i;
+
+    for(i=0; i < size; ++i) {
+        if (fd == (cli_list[i])->sockfd)
+            return cli_list[i];
+    }
+
+    return NULL;
+} /* end serv_find_fd_client */
 
 /******** EOF *********/

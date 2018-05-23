@@ -18,11 +18,9 @@
 #define _R_USR_MAX      100 // TODO: See todo above ;)
 #define _H_STR_MAX      500 // 500 string history.
 #define _H_STR_LEN_MAX  255 // for comparison before additional allocation
-#define _R_NAME_LEN_MAX 20  // room name max
+#define _R_NAME_LEN_MAX 21  // room name max with '\0'
 #define _R_PW_LEN_MAX   25  // passwords up to 25 characters for private rooms
 #define _R_DFLT_ROOM    "void" // defualt room is the void ~ ~
-#define _R_NAME_MAX     11    // includes null value. name only 10 char max.
-
 
 /* what a room is */
 typedef struct room_info {

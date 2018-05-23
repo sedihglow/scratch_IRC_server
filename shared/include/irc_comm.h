@@ -18,7 +18,7 @@
 /* Server connectivity information */
 #define _COM_SERV_ADDR   "10.0.0.169"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   60000             /* port listening on server */
+#define _COM_SERV_PORT   50004 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */
@@ -34,7 +34,7 @@
 
 #define _NAME_SIZE_MAX  11    // includes '\0'
 
-#define MSG_TYPE_SIZE 2
+#define MSG_TYPE_SIZE 1
 
 /******************************************************************************
  *                      Command Code Definition
@@ -135,18 +135,20 @@ static inline ssize_t socket_receive(int sockfd, char *rx,
     ssize_t received = 1;    /* bytes read from a socket, non-EOF init */
     size_t  remaining = len; /* bytes still in buffer */
 
-    while (remaining > 0) {
+    //while (remaining > 0) { Would be okay if all static length messages
         received = recv(sockfd, rx, remaining, flags);
-        if (_usrUnlikely(received == FAILURE)) {
+        if (received == FAILURE) {
             err_msg("socket_recieve: recv() failed");
             return FAILURE;
-        } else if (received == 0) {
-            break;
-        }
+        } 
 
+/*
+        if (received == 0)
+            break;
+*/
         remaining -= received;
         rx        += received;
-    }
+    //}
     
     return (len - remaining);
 } /* end socket_recieve */

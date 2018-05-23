@@ -9,6 +9,7 @@
 
 #define DfLT_CLI_ROOM _R_DFLT_ROOM // found in irc_room.h 
 #define MSG_STR_LEN_MAX _H_STR_LEN_MAX  
+#define ROOM_NAME_MAX _R_NAME_LEN_MAX  // room name max
 
 /* servers information on the client it is communicating with. */
 typedef struct client_info{

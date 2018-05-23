@@ -33,12 +33,13 @@
  *  TODO: Untested 
  ******************************************************************************/
 struct_cli_info** serv_add_client(struct_cli_info **new_cli, 
-                                 struct_cli_info **old_list, size_t old_size)
+                                  struct_cli_info **old_list, size_t old_size)
 {
     unsigned int i;
     struct_cli_info **new_list;
 
     if (!new_cli || !*new_cli) {
+        printf("new cli: %x, *new_cli, %x");
         errno = EINVAL;
         errnum_msg(EINVAL, "serv_add_client: new_cli == NULL");
         return NULL;
@@ -146,10 +147,23 @@ struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list,
 } /* end serv_find_client */
 
 
+/*
+ * See description of rmm_add_user in room.c
+ */
 int serv_add_to_room(struct_room_list *rooms, char *room_name)
 {
     return room_add_user(&rooms->rooms, room_name); 
 } /* end serv_add_to_room */
+
+/*
+ * See description of rmm_add_user in room.c
+ */
+int serv_rem_from_room(struct_room_list *rooms, char *room_name, char *cli_name)
+{
+    return room_remove_user(&rooms->rooms, room_name, cli_name);
+}
+
+
 
 struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
                                      size_t size)

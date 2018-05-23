@@ -275,7 +275,23 @@ void irc_client(void)
         errExit("irc_client: init_irc_info failed.");
 
     init_client_comm(irc_info->serv_info);
-    return;
+
+    int counter; 
+    while (++counter != 100000);
+
+    send_to_server(irc_info->serv_info->sockfd, "james\0\x11\r", sizeof("james\0\x11\r"), 0);
+
+/*
+    while (++counter != 100000);
+    send_to_server(irc_info->serv_info->sockfd, "james\0\x07test\r", sizeof("james\0\x07test\r"), 0);
+    while (++counter != 100000);
+*/
+
+    while(true);
+
+
+
+
 
     /* Spin up recv && exec thread */
     ret = pthread_create(&t_id, NULL, handle_server_requests, (void*)irc_info);

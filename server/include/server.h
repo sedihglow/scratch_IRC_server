@@ -27,10 +27,11 @@ typedef struct room_list {
 struct_cli_info** serv_add_client(struct_cli_info **new_cli, 
                                   struct_cli_info **old_list, size_t old_size);
 
+/* TODO: Add option to check FD like find function for irc_accept going bad. */
 struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list, 
                                      size_t old_size, int sockfd);
 
-struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list, 
+struct_cli_info* serv_find_client(char *find, int fd, struct_cli_info **cli_list, 
                                   size_t size);
 
 struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
@@ -40,6 +41,6 @@ struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list,
  * have irc_server.c call functions out of server.h only.
  */
 
-int serv_add_to_room(struct_room_list *rooms, char *room_name);   // if room does not exist it creates it.
+int serv_add_to_room(struct_room_list *rooms, char *room_name, char *cli_name);   // if room does not exist it creates it.
 int serv_rem_from_room(); // remove client from room if they are there
 int serv_room_msg();      // give a new message to a room.

@@ -101,7 +101,7 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
     new_list = CALLOC_ARRAY(struct_cli_info*, old_size-1);
     
     if (name)
-        remove = serv_find_client(name, old_list, old_size);
+        remove = serv_find_client(name, sockfd, old_list, old_size);
     else
         remove = serv_find_fd_client(sockfd, old_list, old_size);
 
@@ -133,14 +133,18 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
  * Returns pointer to found client struct on success
  *  TODO: Untested 
  ******************************************************************************/
-struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list, 
+struct_cli_info* serv_find_client(char *find, int fd, struct_cli_info **cli_list, 
                                   size_t size)
 {
     unsigned int i;
 
     for (i=0; i < size; ++i) {
-        if (strcmp(cli_list[i]->name, find) == 0)
+        if (cli_list[i]->name) {
+            if (strcmp(cli_list[i]->name, find) == 0)
+                return cli_list[i];
+        } else if (cli_list[i]->sockfd == fd) {
             return cli_list[i];
+        }
     }
     
     return NULL;
@@ -150,9 +154,9 @@ struct_cli_info* serv_find_client(char *find, struct_cli_info **cli_list,
 /*
  * See description of rmm_add_user in room.c
  */
-int serv_add_to_room(struct_room_list *rooms, char *room_name)
+int serv_add_to_room(struct_room_list *rooms, char *room_name, char *cli_name)
 {
-    return room_add_user(&rooms->rooms, room_name); 
+    return room_add_user(&rooms->rooms, room_name, cli_name); 
 } /* end serv_add_to_room */
 
 /*
@@ -162,7 +166,6 @@ int serv_rem_from_room(struct_room_list *rooms, char *room_name, char *cli_name)
 {
     return room_remove_user(&rooms->rooms, room_name, cli_name);
 }
-
 
 
 struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 

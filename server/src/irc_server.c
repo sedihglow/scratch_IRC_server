@@ -145,6 +145,10 @@ struct_irc_info* irc_init_info(void)
     
     info->serv_info = _com_init_serv_info();
 
+    info->rooms = CALLOC(struct_room_list);
+    if (!info->rooms)
+        errExit("irc_init_info: info rooms failed to calloc.");
+
     return info;
 } /* end irc_init_info() */
 
@@ -172,6 +176,8 @@ void irc_free_info(struct_irc_info *irc_info)
     }
 
     _com_free_serv_info(irc_info->serv_info);
+
+    /* TODO: Free room list properly. */
     
     if (irc_info->full_fd_list)
         free(irc_info->full_fd_list);
@@ -197,53 +203,62 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli) 
 {
     struct_cli_info *tmp;
-    void ** ret;
+    struct_cli_info **ret;
+    int len;
 
     /* By now, we know it is a logon messages, shit was parsed and checked */
-    tmp = serv_find_fd_client(cli_msg->cli_name, irc_info->cli_list, 
+    tmp = serv_find_client(cli_msg->cli_name, cli->sockfd, irc_info->cli_list, 
                            irc_info->num_clients);
+    
+    if (tmp != NULL && strcmp(cli_msg->cli_name, DELETE_CLI) != 0) { 
+        /* successful name choice. */   
+        len = strlen(cli_msg->cli_name) + 1; 
+        cli->name = CALLOC_ARRAY(char, len);
+        if (!cli->name)
+            errExit("irc_accept_new_cli: cli name failed to calloc.");
 
-    if (tmp || strcmp(cli_msg->cli_name, DELETE_CLI) == 0) { 
-        /* client name taken or reserved, remove from lists */
-        noerr_msg("Client name is taken. Try again client person.");
+        /* set the new clients name */
+        strncpy(cli->name, cli_msg->cli_name, len);
 
+        /* place client in default room */
+        serv_add_to_room(irc_info->rooms, DfLT_CLI_ROOM, cli->name);
 
-/*** TODO: Might use the shutdown function here and just have cli redo connect*/
-        /* remove fd from fd list, decrement totals */
-        irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
-
-        /* remove from client list. Had to utilize dumb string because scope */
-        ret = (void**)serv_remove_client(NULL, irc_info->cli_list, 
-                                         irc_info->num_clients, cli->sockfd);
-        if (ret != NULL) 
-            irc_info->cli_list = (struct_cli_info**)ret;
-
-        --(irc_info->num_clients);
-
-        return FAILURE;
+        return SUCCESS;
     }
-    /* set the new clients name */
-    strcpy(cli->name, cli_msg->cli_name);
 
-    /* place client in default room */
-    serv_add_to_room(irc_info->rooms, DfLT_CLI_ROOM);
+    /* client name taken or reserved, remove from lists */
+    noerr_msg("Client name is taken. Try again client person.");
 
-    return SUCCESS;
+    /* remove fd from fd list, decrement totals */
+    irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
+
+    /* remove from client list. Had to utilize dumb string because scope */
+    ret = serv_remove_client(NULL, irc_info->cli_list, 
+                                     irc_info->num_clients, cli->sockfd);
+    if (ret != NULL) 
+        irc_info->cli_list = ret;
+
+    --(irc_info->num_clients);
+    /* note you leave it open. */
+
+/* TODO: Might use the shutdown function here and just have cli redo connect*/
+
+    return FAILURE;
 } /* end irc_accept_new_cli */
 
 
 int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
-    int ret; 
+    struct_cli_info **ret; 
     
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli_info->sockfd);
 
     /* remove from client list. Had to utilize dumb string because scope */
-    ret = (void**)serv_remove_client(NULL, irc_info->cli_list, 
+    ret = serv_remove_client(NULL, irc_info->cli_list, 
                                      irc_info->num_clients, cli_info->sockfd);
     if (ret != NULL) 
-        irc_info->cli_list = (struct_cli_info**)ret;
+        irc_info->cli_list = ret;
 
     --(irc_info->num_clients);
 
@@ -329,7 +344,7 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 
     len = working_room->num_users;
     for (i=0; i < len; ++i) {
-        cli = serv_find_client(working_room->room_users[i], irc_info->cli_list, 
+        cli = serv_find_client(working_room->room_users[i], 0, irc_info->cli_list, 
                          irc_info->num_clients);
     }
     
@@ -353,8 +368,10 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  ******************************************************************************/
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
+    int ret;
     /* add client to the room if there is space */
-    if (serv_add_to_room(irc_info->rooms, cli_msg->msg) == FAILURE) {
+    ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli_msg->cli_name);
+    if (ret == FAILURE) {
         /* TODO: Send message to client that the room was full, try again */
         return FAILURE;
     }
@@ -392,7 +409,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
     char rx[IO_BUFF] = {'\0'}; 
     struct_cli_message *cli_msg; /* new incoming client message */
-    int i, len;
 
     receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 

@@ -69,7 +69,7 @@ static int connect_to_server(struct_serv_info *serv_info)
  * TODO:
  *
  * Memory not cleaned up on exit. 
- *
+ 192.168.3.133*
  * Replace errExit functions and clean up memory in irc_server before killing
  * program
  ******************************************************************************/
@@ -110,13 +110,53 @@ int init_client_comm(struct_serv_info *serv_info)
 
 /* returns number of bytes written to socket buffer, if error occures,
  * errno will be set to the appropriate error value from send(). */
-ssize_t send_to_server(int sockfd, char *tx, size_t len, int flags)
+ssize_t send_to_server(int sockfd, uint8_t *tx, size_t len, int flags)
 {
     return socket_transmit(sockfd, tx, len, flags);
 } /* end send_to_server */
 
-ssize_t receive_from_server(int sockfd, char *rx, size_t len, int flags)
+ssize_t receive_from_server(int sockfd, uint8_t *rx, size_t len, int flags)
 {
     return socket_receive(sockfd, rx, len, flags);
 } /* end recieve_from_server */
+
+int com_send_logon_message(char *name, struct_serv_info *serv_info)
+{
+    uint8_t *msg;
+    size_t name_len;
+    size_t msg_len;
+     
+    name_len = strlen(name) + 1;
+    msg_len = name_len + MSG_TYPE_SIZE + 1; 
+
+    msg = CALLOC_ARRAY(char, msg_len);
+    if (!msg)
+        errExit("send_logon_message: download more ram.");
+
+    strncpy(msg, name, name_len);  /* copy name w/ '\0' */
+    
+    msg[name_len] = RC_LOGON; /* add type */
+    msg[name_len+1] = '\r';   /* add terminator */
+
+    if (send_to_server(serv_info->sockfd, msg, msg_len, NO_FLAGS) == FAILURE) {
+        free(msg);
+        return FAILURE;
+    }
+
+    return SUCCESS;
+} /* end com_send_logon_message */
+
+
+int com_get_logon_result(int fd)
+{
+    uint8_t rx[_COM_IO_BUFF] = {'\0'};
+
+    /* should... block until data is recieved. */
+    receive_from_server(fd, rx, _COM_IO_BUFF, NO_FLAGS);
+
+    if (rx[0] != RC_LOGON || rx[1] == 0x0)
+        return FAILURE;
+
+    return SUCCESS;
+} /* end com_get_logon_message */
 /******* EOF ******/

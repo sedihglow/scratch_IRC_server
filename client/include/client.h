@@ -10,7 +10,6 @@
 #include "room.h"
 
 
-#define LONGEST_CMD_LEN (sizeof(F_REM))
 /******************************************************************************
  *                      Friend List Definitions
  ******************************************************************************/
@@ -50,6 +49,7 @@
 #define PRIV_MSG "/pm "    // /pm <name> "msg" : Send the private shit
 #define PRIV_REP "/r "     // /r "msg"         : Reply to previos PM 
 
+#define LONGEST_CMD_LEN (sizeof(F_REM))
 
 /******************************************************************************
  *                      Non Command Definitions
@@ -57,12 +57,16 @@
 #define IO_STR_LEN_MAX H_STR_LEN_MAX // definition found in irc_room.h
 #define F_MAX     30    // 30 friends max. Too popular too bad. 
 
+#define CLI_NAME_MAX _NAME_SIZE_MAX 
+
+
 typedef struct friend_list {
     char **list;
 } struct_flist;
 
 typedef struct client_info {
-    struct_room_state *room;  /* gonna have to grow and shrink */
+//    struct_room_state *room;  /* gonna have to grow and shrink */
+    struct_room_info *rooms;
     int room_count;           /* number of rooms the client is in. */
     char *name;
     struct_flist *f_list;

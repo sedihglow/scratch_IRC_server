@@ -203,8 +203,10 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli) 
 {
     struct_cli_info *tmp;
-    struct_cli_info **ret;
+    struct_cli_info **cli_ret;
+    int ret;
     int len;
+    
 
     /* By now, we know it is a logon messages, shit was parsed and checked */
     tmp = serv_find_client(cli_msg->cli_name, cli->sockfd, irc_info->cli_list, 
@@ -220,29 +222,41 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
         /* set the new clients name */
         strncpy(cli->name, cli_msg->cli_name, len);
 
-        /* place client in default room */
+        /* TODO: Get rid of this. place client in default room */
         serv_add_to_room(irc_info->rooms, DfLT_CLI_ROOM, cli->name);
 
+        /* let client know success */
+        ret = com_send_logon_result(cli->sockfd, 
+                                    LOGON_SUCCESS);
+        if (ret == FAILURE) {
+            err_msg("irc_accept_new_cli: failed to send logon response");
+            return FAILURE;
+        }
+        printf("client successfully accepted and responded to\n");
         return SUCCESS;
     }
 
     /* client name taken or reserved, remove from lists */
     noerr_msg("Client name is taken. Try again client person.");
 
+    /* let client know success */
+    com_send_logon_result(cli->sockfd, LOGON_FAILURE);
+
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
 
     /* remove from client list. Had to utilize dumb string because scope */
-    ret = serv_remove_client(NULL, irc_info->cli_list, 
+    cli_ret = serv_remove_client(NULL, irc_info->cli_list, 
                                      irc_info->num_clients, cli->sockfd);
-    if (ret != NULL) 
-        irc_info->cli_list = ret;
+    if (cli_ret != NULL) 
+        irc_info->cli_list = cli_ret;
 
     --(irc_info->num_clients);
     /* note you leave it open. */
 
 /* TODO: Might use the shutdown function here and just have cli redo connect*/
 
+    printf("client FAILED to be accepted and responded to\n");
     return FAILURE;
 } /* end irc_accept_new_cli */
 
@@ -286,7 +300,12 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
         errExit("irc_take_new_connection: accepting connection failed.\n");
 
     /* set file descriptor to non-blocking I/O */
-    fcntl(cli_info->sockfd, F_SETFL, O_NONBLOCK);
+    /* TODO MYSTERY TO TEST: I think my client and my server get the same
+     *                       file descriptor on the same socket which wouldnt
+     *                       happen in the real world situation, but may have
+     *                       affected tested. LOL
+     */
+    //fcntl(cli_info->sockfd, F_SETFL, O_NONBLOCK);
 
     irc_info->full_fd_list = irc_add_fd_list(irc_info, cli_info->sockfd);
     ++(*nfds);
@@ -407,7 +426,7 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  ******************************************************************************/
 int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info) 
 {
-    char rx[IO_BUFF] = {'\0'}; 
+    uint8_t rx[IO_BUFF] = {'\0'}; 
     struct_cli_message *cli_msg; /* new incoming client message */
 
     receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);

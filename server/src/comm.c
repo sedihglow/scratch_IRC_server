@@ -71,7 +71,7 @@ int init_server_comm(struct_serv_info *serv_info)
     return SUCCESS;
 } /* end init_server_com() */
 
-ssize_t send_to_client(int sockfd, char *tx, size_t len, int flags)
+ssize_t send_to_client(int sockfd, uint8_t *tx, size_t len, int flags)
 {
     if (!tx)
         return FAILURE;
@@ -79,7 +79,7 @@ ssize_t send_to_client(int sockfd, char *tx, size_t len, int flags)
     return socket_transmit(sockfd, tx, len, flags);
 } /* end send_to_client */
 
-ssize_t receive_from_client(int sockfd, char *rx, size_t len, int flags)
+ssize_t receive_from_client(int sockfd, uint8_t *rx, size_t len, int flags)
 {
     if (!rx)
         return FAILURE;
@@ -94,7 +94,7 @@ ssize_t receive_from_client(int sockfd, char *rx, size_t len, int flags)
  * TODO: Memory is not cleaned up on error yet.
  *       Also untested.
  ******************************************************************************/
-struct_cli_message* com_parse_cli_message(char *rx)
+struct_cli_message* com_parse_cli_message(uint8_t *rx)
 {
     struct_cli_message *new_msg;
     int i, j;
@@ -143,4 +143,19 @@ struct_cli_message* com_parse_cli_message(char *rx)
    
     return new_msg;
 } /* end parse_cli_message() */
+
+
+int com_send_logon_result(int fd, int payload)
+{
+    int ret;
+    uint8_t tx[_LOGON_REPLY_SIZE] = {RC_LOGON, payload, '\r'};
+    printf("sending logon result.\n");
+    ret = send_to_client(fd, tx, sizeof(tx), NO_FLAGS);
+    if (ret == FAILURE) {
+        printf("sending logon result FAILED.\n");
+        return FAILURE;
+    }
+    printf("sending logon result SUCCESS.\n");
+    return SUCCESS;
+} /* end com_send_logon_result */
 /******* EOF *******/

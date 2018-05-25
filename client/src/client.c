@@ -26,19 +26,8 @@ struct_client_info* cli_init_info(void)
         return NULL;
     }
 
-    init->room = room_init_state();
-    if (!init->room) {
-        err_msg("cli_init_info: calloc failure - room.");
-        return NULL;
-    }
-
-    /* TODO: See next TODO over F list
-        init->name = CALLOC_ARRAY(char, NAME_BUFF);
-        if (!init->name) {
-            err_msg("cli_init_info: calloc failure - name.");
-            return NULL;
-        }
-    */
+    init->rooms = NULL;
+    init->name = NULL;
 
     init->f_list = CALLOC(struct_flist);
     if (!init->f_list) {
@@ -46,23 +35,12 @@ struct_client_info* cli_init_info(void)
         return NULL;
     }
 
-
-/*  TODO: Do the lame allocate deallocate thing with this stuff too.
     init->f_list->list = CALLOC_ARRAY(char*, F_MAX);
     if (!init->f_list->list) {
         err_msg("cli_init_info: calloc failure - **list.");
         return NULL;
     }
    
-    for (i=0; i < F_MAX; ++i) {
-        init->f_list->list[i] = CALLOC_ARRAY(char, NAME_BUFF);
-        if (!(init->f_list->list[i])) {
-            err_msg("cli_init_info: calloc failure - list, index %d",i);
-            return NULL;
-        }
-    }
-*/
-
     return init;
 } /* end cli_init_info() */
 
@@ -70,7 +48,7 @@ void cli_free_info(struct_client_info *dest)
 {
     int i;
 
-    room_free_state(dest->room);
+    room_free_info(dest->rooms);
 
     /* free flist->list indecies */
     for (i=0; i < F_MAX; ++i) {
@@ -80,7 +58,7 @@ void cli_free_info(struct_client_info *dest)
             break;
     }
 
-    FREE_ALL(dest->room, dest->name, dest->f_list->list, dest->f_list, dest);
+    FREE_ALL(dest->rooms, dest->name, dest->f_list->list, dest->f_list, dest);
 }
 
 /*******************************************************************************

@@ -16,9 +16,9 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.0.0.169"
+#define _COM_SERV_ADDR   "192.168.3.133"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   50009 /* port listening on server */
+#define _COM_SERV_PORT   50012 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */
@@ -61,6 +61,12 @@
 #define RC_LEAVE  0x13
 #define RC_HB     0x14
 
+
+/* return payloads */
+#define _LOGON_SUCCESS 1
+#define _LOGON_FAILURE 0
+#define _LOGON_REPLY_SIZE 3
+
 typedef struct server_info {
     in_addr_t addr;      /* network binary of server address */
     char *dot_addr;      /* dotted representation of IP address */
@@ -77,6 +83,11 @@ typedef struct parsed_cli_message {
     int  type;
     char *msg;
 } struct_cli_message;
+
+typedef struct parsed_serv_message {
+    int type;
+    char *msg;
+} struct_serv_message;
 
 /****************************************************************************** 
  * DEVELOPMENT NOTE: This is a generic ring buffer but it is IO since COM
@@ -108,7 +119,7 @@ void _com_free_cli_message(struct_cli_message *rem);
  * single line function that returns this. Other issues though? Memory
  * imprint in a different way?
  ******************************************************************************/
-static inline ssize_t socket_transmit(int sockfd, char *tx, 
+static inline ssize_t socket_transmit(int sockfd, uint8_t *tx, 
                                       size_t len, int flags)
 {
     ssize_t sent;            /* number of bytes written to socket */
@@ -129,13 +140,14 @@ static inline ssize_t socket_transmit(int sockfd, char *tx,
    return (len - remaining);
 } /* end socket_transmit */
 
-static inline ssize_t socket_receive(int sockfd, char *rx, 
+static inline ssize_t socket_receive(int sockfd, uint8_t *rx, 
                                      size_t len, int flags)
 {
     ssize_t received = 1;    /* bytes read from a socket, non-EOF init */
     size_t  remaining = len; /* bytes still in buffer */
 
     //while (remaining > 0) { Would be okay if all static length messages
+/* TODO: com_get_logon_result blocking will test if we need that while loop */
         received = recv(sockfd, rx, remaining, flags);
         if (received == FAILURE) {
             err_msg("socket_recieve: recv() failed");

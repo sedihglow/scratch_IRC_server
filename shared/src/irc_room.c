@@ -61,6 +61,8 @@ struct_room_info* _room_init_info(bool pub, char *pw)
         err_msg("room_init_info: calloc failure - room_users.");
         return NULL;
     }
+    /* individual index ponters not filled. allocate when name is passed. */
+
 
     /* note history is a ring buffer, felt it okay to allocate it all here
      * for now.
@@ -93,7 +95,7 @@ void _room_free_info(struct_room_info *dest)
 
     /* free room user indecies */
     if (dest->room_users) {
-        for (i=0; dest->room_users[i] != NULL; ++i) {
+        for (i=0; i < dest->num_users; ++i) {
             if (dest->room_users[i])
                 free(dest->room_users[i]);
         }

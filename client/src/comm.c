@@ -129,11 +129,11 @@ int com_send_logon_message(char *name, struct_serv_info *serv_info)
     name_len = strlen(name) + 1;
     msg_len = name_len + MSG_TYPE_SIZE + 1; 
 
-    msg = CALLOC_ARRAY(char, msg_len);
+    msg = CALLOC_ARRAY(uint8_t, msg_len);
     if (!msg)
         errExit("send_logon_message: download more ram.");
 
-    strncpy(msg, name, name_len);  /* copy name w/ '\0' */
+    strncpy((char*)msg, name, name_len);  /* copy name w/ '\0' */
     
     msg[name_len] = RC_LOGON; /* add type */
     msg[name_len+1] = '\r';   /* add terminator */
@@ -143,6 +143,7 @@ int com_send_logon_message(char *name, struct_serv_info *serv_info)
         return FAILURE;
     }
 
+    free(msg);
     return SUCCESS;
 } /* end com_send_logon_message */
 

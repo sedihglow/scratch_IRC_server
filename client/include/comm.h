@@ -19,7 +19,11 @@ ssize_t send_to_server(int sockfd, uint8_t *tx, size_t len, int flags);
 ssize_t receive_from_server(int sockfd, uint8_t *rx, size_t len, int flags);
 int request_who(char *name, bool *online); 
 
-/* returns a build message to be sent. */
+/* sends properly built message to the server. */
 int com_send_logon_message(char *name, struct_serv_info *serv_info);
+int com_send_chat_message(char *name, struct_serv_info *serv_info);
+
+
+
 int com_get_logon_result(int fd);
 #endif

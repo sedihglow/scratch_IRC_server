@@ -6,6 +6,8 @@
 
 #include "irc_client.h"
 
+static volatile bool g_serv_crashed = false;
+
 
 /******************************************************************************* 
  *                          Static Functions
@@ -28,25 +30,13 @@ static int find_fcmd(char *input)
 {
     int ret;
 
-    ret = strncmp(input, "add ", 4);
-    if (ret == 0)
-        return RC_FA;
-
     ret = strncmp(input, "a ", 2);
     if (ret == 0)
         return RC_FA;
 
-    ret = strncmp(input, "list ", 5);
-    if (ret == 0)
-        return RC_FL;
-
     ret = strncmp(input, "l ", 2);
     if (ret == 0)
         return RC_FL;
-
-    ret = strncmp(input, "remove ", 7);
-    if (ret == 0)
-        return RC_FR;
 
     ret = strncmp(input, "r ", 2);
     if (ret == 0)
@@ -63,23 +53,11 @@ static int find_bcmd(char *input)
     if (ret == 0)
         return RC_BL;
 
-    ret = strncmp(input, "list ", 5);
-    if (ret == 0)
-        return RC_BL;
-
-    ret = strncmp(input, "a ", 2);
-    if (ret == 0)
-        return RC_BA;
-
-    ret = strncmp(input, "add ", 4);
+    ret = strncmp(input, "a", 2);
     if (ret == 0)
         return RC_BA;
 
     ret = strncmp(input, "r ", 2);
-    if (ret == 0)
-        return RC_BR;
-
-    ret = strncmp(input, "remove ", 6);
     if (ret == 0)
         return RC_BR;
 
@@ -94,25 +72,22 @@ static int find_inv_cmd(char *input)
     if (ret == 0)
         return RC_INV;
 
-    ret = strncmp(input, "invite ", 7);
-    if (ret == 0)
-        return RC_INV;
-
     return RC_ERR;
 }
 
 static int find_room_cmd(char *input)
 {
     int ret;
-
-    ret = strncmp(input, "invite ", 7);
+    
+    /* TODO Single letter shit needs some if statments before it to check for newline
+     * or null to make sure it is valid and not just lifr or asda
+     *
+     * Basically all the shit after /<shit> <arg parsing>
+     */
+    ret = strncmp(input, "l", 1);
     if (ret == 0)
-        return RC_INV;
+        return RC_RL;
       
-    ret = strncmp(input, "invite ", 7);
-    if (ret == 0)
-        return RC_INV;
-
     return RC_ERR;
 } /* end find_room_cmd */
 /* end static parse helpers */
@@ -126,75 +101,104 @@ static int find_room_cmd(char *input)
 /*******************************************************************************
  * Parse's the input of the client. Finds what type of input it was, msg or 
  * command then which command if applicable.
- *
- * Returns identifier showing which type of input it was.
- *
- * Some functions pass an incrented address so we dont compare the same shit
- * twice. Only one that doesnt in /inv vs /invite since there is no space
- * seperator.
- *
- * TODO: This might be threaded and called after input, on the thread that runs 
- *       the input waiting. Then pass this return value to main thread.
  ******************************************************************************/
-int parse_args(char *input)
+int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
-    int ret = 0;
-
-    if (input[0] != '/')
-        return RC_MSG;
+    int ret;
+    int type;
+    
+    if (input[0] != '/') {
+        return com_send_chat_message(irc_info->client->name, 
+                                     irc_info->serv_info);
+    }
 
     ret = strncmp(input, "/f ", 3);
-    if (ret == 0)
-        return find_fcmd(input+3);
+    if (ret == 0) {
+        type = find_fcmd(input+3);
+        if (type == RC_FL)
+            ret = cli_handle_flist(type, irc_info->client, NULL);
+        else
+            ret = cli_handle_flist(type, irc_info->client, input+5);
+
+        return ret;
+    }
 
     ret = strncmp(input, "/b ", 3);
-    if (ret == 0)
-        return find_bcmd(input+3);
+    if (ret == 0) {
+        find_bcmd(input+3);
+    }
 
     ret = strncmp(input, WHO, sizeof(WHO)-1);
-    if (ret == 0)
-        return RC_WHO;
+    if (ret == 0) {
+        RC_WHO;
+    }
 
     ret = strncmp(input, JOIN, sizeof(JOIN)-1);
-    if (ret == 0)
-        return RC_JOIN;
+    if (ret == 0) {
+        RC_JOIN;
+    }
 
     ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT)-1);
-    if (ret == 0)
-        return RC_LOGOUT;
+    if (ret == 0) {
+        RC_LOGOUT;
+    }
 
     ret = strncmp(input, INV, sizeof(INV)-1);
-    if (ret == 0)
-        return find_inv_cmd(input);
+    if (ret == 0) {
+        find_inv_cmd(input);
+    }
 
     ret = strncmp(input, ROOM_L, sizeof(ROOM_L)-1);
-    if (ret == 0)
-        return find_room_cmd(input+5);
+    if (ret == 0) {
+        find_room_cmd(input+5);
+    }
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG)-1);
-    if (ret == 0)
-        return RC_PM;
+    if (ret == 0) {
+        RC_PM;
+    }
 
     /* This needs to be AFTER comparing ROOM_L since both start with /r */
     ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP)-1);
-    if (ret == 0)
-        return RC_PR;
+    if (ret == 0) {
+        RC_PR;
+    }
 
     ret = strncmp(input, VOID, sizeof(PRIV_REP)-1);
-    if (ret == 0)
-        return RC_VOID;
+    if (ret == 0) {
+        RC_VOID;
+    }
 
     ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC)-1);
-    if (ret == 0)
-        return RC_EXIT;
+    if (ret == 0) {
+        RC_EXIT;
+    }
+    
+    return com_send_chat_message(irc_info->client->name, irc_info->serv_info);
 
 
-    return RC_MSG;
+
+
 } /* end parse_args */
 
 void* irc_handle_server_requests(void *args)
 {
     struct_irc_info *irc_info = (struct_irc_info*) args;
+    uint8_t rx[_COM_IO_BUFF] = {'\0'};
+    int current_cmd;
+
+    for ( ;; ) {
+        /* block waiting for message from server. */
+        receive_from_server(irc_info->serv_info->sockfd, rx, _COM_IO_BUFF, 
+                            NO_FLAGS);
+
+        if (rx[0] == 0x0) { 
+            /* server crashed or i have a bug */
+            g_serv_crashed = true;
+            pthread_exit(NULL);
+        }
+
+    }
 
     pthread_exit(NULL);
 } /* end handle_server_requests() */
@@ -285,7 +289,6 @@ void display_welcome(void)
 void irc_logon_client(struct_irc_info *irc_info)
 {
     int ret;
-    int servfd;
     size_t len;
     char *input;
 
@@ -302,7 +305,7 @@ void irc_logon_client(struct_irc_info *irc_info)
             errExit("irc_logon_client: strange, nothing read...");
         
         len = strlen(input) + 1;
-        if (len <= CLI_NAME_MAX) {
+        if (len <= CLI_NAME_MAX && len > 1) {
 
             /* inform the server of the clients name and register */
             ret = com_send_logon_message(input, irc_info->serv_info);
@@ -312,10 +315,10 @@ void irc_logon_client(struct_irc_info *irc_info)
                 ret = com_get_logon_result(irc_info->serv_info->sockfd);
                 if (_usrLikely(ret == SUCCESS)) {
 
-                    /* logon successful, set local client information, */
-
-                    /* place in the void. */
-
+                    /* logon successful, set local client information,
+                     * place in default room */
+                    cli_set_new_cli_info(irc_info->client, input);
+                    printf("\ncongradulations, logon Sucecssful.\n");
 
                 } else {
                     printf("Name is already taken, please try again.\n");
@@ -329,12 +332,23 @@ void irc_logon_client(struct_irc_info *irc_info)
 
         FREE_ALL(input);
         /* while response is denied || len */
-     } while (len > CLI_NAME_MAX);
-    /* TODO: On success, make sure to fill in personal client pointer */
-
-
-
+     } while (len > CLI_NAME_MAX && len > 1);
 } /* end display_logon */
+
+void display_room_welcome(char *room_name, int num_users)
+{
+    int ret;
+
+    ret = strcmp(room_name, R_DFLT_ROOM);
+    if (ret == 0) {
+        printf("\nYou have entered the %s, You are in silence.\n"
+               "Number of users in the room: 0\n\n", room_name);
+        return;
+    }
+
+    printf("\nWelcome to the room  %s, currently with %d active users.\n\n",
+            room_name, num_users);
+} /* end display_room_welcome */
 
 /* Main execution function. Leaves this leaves the program. */
 void irc_client(void)
@@ -355,23 +369,25 @@ void irc_client(void)
     init_client_comm(irc_info->serv_info);
 
     display_welcome();
-    irc_logon_client(irc_info);
+    /* waits for server response untill successful logon. */
+    irc_logon_client(irc_info); 
+    display_clear();
+    display_room_welcome(R_DFLT_ROOM, 0);
 
-//    send_to_server(irc_info->serv_info->sockfd, "james\0\x11\r", sizeof("james\0\x11\r"), 0);
-
-#if 0
     /* Spin up recv && exec thread */
-    ret = pthread_create(&t_id, NULL, handle_server_requests, (void*)irc_info);
+    ret = pthread_create(&t_id, NULL, irc_handle_server_requests, (void*)irc_info);
     if (ret)
         errnumExit(ret, "irc_client: Failed to create recv thread.");
 
     ret = pthread_detach(t_id); /* i shouldnt need to ret anything */
     if (ret)
         errnumExit(ret, "irc_client: Failed to detach recv thread.");
-#endif
 
     /* TODO: Figure out exit flag after you figure out getting input from user */
-    for ( ;; ) { }
+    for ( ;; ) { 
+        
+        
+    }
 
 #if 0
         input = irc_get_user_input();
@@ -379,7 +395,6 @@ void irc_client(void)
             noerr_msg("irc_client: strange, nothing read...");
             continue;
         }
-        current_cmd = parse_args(input);
     }
 
     printf("after send");
@@ -387,6 +402,10 @@ void irc_client(void)
     if (input)
         free(input);
 #endif
+
+
+//    send_to_server(irc_info->serv_info->sockfd, "james\0\x11\r", sizeof("james\0\x11\r"), 0);
+
     irc_free_info(irc_info);
 } /* end irc_client() */
 /****** EOF ******/

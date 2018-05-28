@@ -13,6 +13,7 @@
 #define R_NAME_LEN_MAX _R_NAME_LEN_MAX 
 #define R_PW_LEN_MAX   _R_PW_LEN_MAX   
 #define R_DFLT_ROOM    _R_DFLT_ROOM    
+#define R_ROOM_MAX     _R_ROOM_MAX
 
 typedef struct room_state {
     struct_room_info *current_room;

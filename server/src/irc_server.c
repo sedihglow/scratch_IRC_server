@@ -320,8 +320,6 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
     ++(irc_info->num_clients);
 } /* irc_take_new_connection */
 
-
-
 /*
  * msg format RC_MSG: name | type | current room | input 
  */
@@ -581,8 +579,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
         return FAILURE;
 
     }
-
-
 
     _com_free_cli_message(cli_msg);
     cli_msg = NULL;

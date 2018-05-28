@@ -8,6 +8,7 @@
 #define _CLIENT_H_
 
 #include "room.h"
+#include "irc_comm.h" /* Only for the RC definitions. Dont like it tho. */
 
 
 /******************************************************************************
@@ -39,7 +40,7 @@
   *             - change what room is being displayed, let server know
   *             - If it is the last room the user is in, go to VOID
   */
-#define LEAVE    "/leave"         // /leave <channel> : leave a channel
+#define LEAVE    "/leave "        // /leave <channel> : leave a channel
 #define LOG_OUT  "/logout "       //                  : Back to login screen.
 #define INVITE   "/invite "       // /invite <name>   : Invite to current room 
 #define INV      "/inv "          // /inv <name>      : Same as above
@@ -59,14 +60,13 @@
 
 #define CLI_NAME_MAX _NAME_SIZE_MAX 
 
-
 typedef struct friend_list {
-    char **list;
+    char *list[F_MAX];
+    int fcount;
 } struct_flist;
 
 typedef struct client_info {
-//    struct_room_state *room;  /* gonna have to grow and shrink */
-    struct_room_info *rooms;
+    struct_room_info *rooms[R_ROOM_MAX];
     int room_count;           /* number of rooms the client is in. */
     char *name;
     struct_flist *f_list;
@@ -74,12 +74,26 @@ typedef struct client_info {
 
 struct_client_info* cli_init_info(void);
 void cli_free_info(struct_client_info *dest);
-int cli_block_enemy(struct_client_info *client, char *name);
-int cli_inv_friend_to_room(struct_client_info *client, char *name);
-int cli_display_friends(struct_client_info *client);
-int cli_remove_friend(struct_client_info *client);
-int cli_add_friend(struct_client_info *client);
+
+/* Sets the client information for a first successful server connection */
+int cli_set_new_cli_info(struct_client_info *cli_info, char *name);
+
+
+/* Handles friend list functionality, helper functions are static  */
+int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname);
+
+/* Handle clients room situations */
 int cli_request_room(struct_client_info *client);
+
+
+
+
+
+/* TODO: Might not have time to implement 
+ * int cli_block_enemy(struct_client_info *client, char *name);
+ * int cli_inv_friend_to_room(struct_client_info *client, char *name);
+ */
+
 
 #endif
 /****** EOF ******/

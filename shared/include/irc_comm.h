@@ -16,7 +16,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "192.168.3.133"
+#define _COM_SERV_ADDR   "10.0.0.169"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
 #define _COM_SERV_PORT   50012 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
@@ -85,7 +85,7 @@ typedef struct parsed_cli_message {
 } struct_cli_message;
 
 typedef struct parsed_serv_message {
-    int type;
+    uint8_t type;
     char *msg;
 } struct_serv_message;
 

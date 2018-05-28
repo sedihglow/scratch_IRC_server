@@ -21,15 +21,16 @@
 #define _R_NAME_LEN_MAX 21  // room name max with '\0'
 #define _R_PW_LEN_MAX   25  // passwords up to 25 characters for private rooms
 #define _R_DFLT_ROOM    "void" // defualt room is the void ~ ~
+#define _R_ROOM_MAX     3      // max 3 rooms at a time
 
 /* what a room is */
 typedef struct room_info {
     char *room_name;
     bool pub_flag;       // is this room public or not?
     char *password;      // if not public. Otherwise dont allocate
-    uint32_t num_users;  // TODO: Max num users per channel?
     char **room_users;   // Reallocates in chunks.
-    size_t max_name_len; // Given in init, used for freeing room_users[]
+    uint32_t num_users;  // TODO: Max num users per channel?
+    size_t max_name_len; // Given in init
     char **history;      // Ring buffer.
     int hist_start;
     int hist_end;

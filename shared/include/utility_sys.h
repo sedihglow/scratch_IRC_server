@@ -60,6 +60,13 @@
 #define CALLOC_VOID(nmemb, size) ((void*) calloc(nmemb, size))
 #define CALLOC_ARRAY(type, num)  ((type*) calloc(num, sizeof(type)))
 
+
+#define my_strdup(dest, src, len)                                              \
+{                                                                              \
+    dest = CALLOC_ARRAY(char, len);                                            \
+    if (dest) memcpy(dest, src, len);                                          \
+} /* end my_strdup */
+
 /*******************************************************************************  
  * buff is set to '\0' for nByte before read occures. 
  *  If nothing is read, buff[0] = '\0', retBytes == 0.

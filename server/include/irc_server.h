@@ -24,6 +24,8 @@ void irc_server(void);
 struct_irc_info* irc_init_info(void);
 void irc_free_info(struct_irc_info *info);
 
+int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info);
+
 void irc_fill_fd_set_read(struct_irc_info *irc_info, fd_set *readfds);
 int* irc_add_fd_list(struct_irc_info *info, int newfd);
 int* irc_remove_fd_list(struct_irc_info *info, int fd);

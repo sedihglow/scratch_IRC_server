@@ -35,3 +35,4 @@ int com_send_logon_result(int fd, int payload);
 int com_send_join_result(int fd, uint8_t res);
 
 int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg);
+int com_send_leave_result(int fd, char *cli_name, uint8_t res);

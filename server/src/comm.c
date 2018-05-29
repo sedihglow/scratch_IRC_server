@@ -162,17 +162,25 @@ int com_send_logon_result(uint8_t fd, uint8_t payload)
 int com_send_join_result(int fd, uint8_t res)
 {
 
-
+    return SUCCESS;
 } /* end com_send_join_result */
+
+int com_send_leave_result(int fd, char *cli_name, uint8_t res)
+{
+
+    return SUCCESS;
+} /* end com_send_leave_result */
 
 int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg)
 {
 
 
-
+    return SUCCESS;
 } /* end com_send_room_message */
 
-
-
-
+int com_send_exit_message(int fd) 
+{
+    uint8_t tx[] = {RC_EXIT, \r};
+    send_to_client(fd, tx, sizeof(tx), NO_FLAGS);
+}
 /******* EOF *******/

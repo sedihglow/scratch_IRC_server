@@ -28,7 +28,8 @@ int com_send_leave_message(char *cli_name, char *room_name,
                            struct_serv_info *serv_info);
 
 int com_send_logout_message(char *cli_name, struct_serv_info *serv_info);
-int com_send_exit_message(char *cli_name, struct_serv_info *serv_info);
+int com_send_exit_message(char *cli_name, struct_serv_info *serv_info,
+                          char *room_list, int room_list_size);
 
 
 

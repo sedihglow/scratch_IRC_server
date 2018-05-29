@@ -256,10 +256,9 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
 
 /* TODO: Might use the shutdown function here and just have cli redo connect*/
 
-    printf("client FAILED to be accepted and responded to\n");
+    printf("client FAILED to be accepted and is responded to\n");
     return FAILURE;
 } /* end irc_accept_new_cli */
-
 
 int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
@@ -406,36 +405,89 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
     int ret;
-    /* add client to the room if there is space */
-    ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli_msg->cli_name);
-    if (ret == FAILURE) {
-        com_send_join_result(irc_info->serv_info->sockfd, 0x0);
+    struct_cli_info *cli;
+
+    /* get clients information */
+    cli = serv_find_client(cli_msg->cli_name, 0, irc_info->cli_list,
+                           irc_info->num_clients);
+    if (!cli) {
+        errnum_msg(EINVAL, "irc_cli_join_cmd: Client didnt exist?");
         return FAILURE;
     }
-    /* client successfully added to room, let them know. */
-    com_send_join_result(irc_info->serv_info->sockfd, 0x1);
 
-    return SUCCESS;
+    /* add client to the room if there is space */
+    ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli->name);
+    if (ret == FAILURE) {
+        com_send_join_result(cli->sockfd, _REPLY_FAILURE);
+        return FAILURE;
+    }
+
+    /* add new room to active room list for client */
+    serv_add_active_room(cli, cli_msg->msg);
+
+    /* client successfully added to room, let them know. */
+    return com_send_join_result(cli->sockfd, _REPLY_SUCCESS);
 } /* end irc_cli_join_cmd */
 
 /* 
  * leave a particular room.
- * msg format: cli_name | RC_LEAVE | room name
+ * client to server msg format: cli_name | RC_LEAVE | room name | \r
+ * server to client msg format: RC_LEAVE | result | \r 
  */
 int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
     int ret;
-    ret = serv_rem_from_room(irc_info->rooms, cli_msg->msg, cli_msg->cli_name);
-    if (ret == FAILURE) {
-        /* send message to client noting client should check this. */
+    struct_cli_info *cli;
+    
+    /* get clients information */
+    cli = serv_find_client(cli_msg->cli_name, 0, irc_info->cli_list,
+                           irc_info->num_clients);
+    if (!cli) {
+        errnum_msg(EINVAL, "irc_cli_join_cmd: Client didnt exist?");
         return FAILURE;
     }
+    
+    /* remove client from the room */
+    ret = serv_rem_from_room(irc_info->rooms, cli_msg->msg, cli->name);
+    if (ret == FAILURE) {
+        /* send message to client about the failure */
+        com_send_leave_result(cli->sockfd, cli->name, _REPLY_FAILURE);
+        return FAILURE;
+    }
+    
+    /* remove from clients active room list */
+    serv_remove_active_room(struct_cli_info *cli, char *room_name);
+
+    /* let client know they left the room successfully and can update. */
+    return com_send_leave_result(cli->sockfd, cli->name, _REPLY_SUCCESS);
 } /* irc_cli_leave_cmd */
 
 
+/* 
+ * client to server format: cli_name | RC_EXIT | \r
+ * server to client format: RC_EXIT | \r
+ */
 int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    /* deallocate all client information */
+    int ret;
+    struct_cli_info *cli;
+    
+    /* get clients information */
+    cli = serv_find_client(cli_msg->cli_name, 0, irc_info->cli_list,
+                           irc_info->num_clients);
+    if (!cli) {
+        errnum_msg(EINVAL, "irc_cli_join_cmd: Client didnt exist?");
+        return FAILURE;
+    }
+
+    /* ack client */
+    com_send_exit_message(cli->sockfd);
+
+
+    shutdown
+    /* leave all rooms on server */
+
+    /* deallocate client struct */
 
     /* shutdown port */
 } /* enc_cli_exit_cmd */

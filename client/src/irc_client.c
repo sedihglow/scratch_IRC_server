@@ -108,17 +108,17 @@ static int find_room_cmd(char *input)
  ******************************************************************************/
 int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
-    int ret;
-    int type;
-    int len;
+    int ret, type, len;
     char *cli_name = irc_info->client->name;
+    char *room_names;
     
     if (input[0] != '/') {
         return com_send_chat_message(cli_name, input,
                                      irc_info->serv_info);
     }
 
-    ret = strncmp(input, "/f ", 3);
+    /* /f [a, r, l] */
+    ret = strncmp(input, "/f ", 3); 
     if (ret == 0) {
         type = find_fcmd(input+3);
         if (type == RC_FL)
@@ -130,6 +130,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         return ret;
     }
 
+    /* /join */
     len = sizeof(JOIN); /* includes '\0' */
     ret = strncmp(input, JOIN, len-1);
     if (ret == 0) {
@@ -141,6 +142,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         }
     }
 
+    /* /leave */
     len = sizeof(LEAVE);
     ret = strncmp(input, LEAVE, len-1);
     if (ret == 0) {
@@ -157,6 +159,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         return ret;
     }
 
+    /* /exit */
     len = sizeof(EXIT_IRC);
     ret = strncmp(input, EXIT_IRC, len-1);
     if (ret == 0) {
@@ -219,11 +222,15 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 */
 } /* end irc_handle_user_input */
 
+
+
+/* TODO: DONT FORGET TO LEAVE THE VOID IF INSIDE ON JOIN RESPONSE */
 void* irc_handle_server_requests(void *args)
 {
     struct_irc_info *irc_info = (struct_irc_info*) args;
     uint8_t rx[_COM_IO_BUFF] = {'\0'};
     int current_cmd;
+
 
     for ( ;; ) {
         /* block waiting for message from server. */

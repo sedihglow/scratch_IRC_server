@@ -120,7 +120,20 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
         }
     }
 
-    FREE_ALL(remove, old_list);
+    /* remove from all active rooms, free active room list */
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (remove->active_rooms[i]) {
+            if (serv_rem_from_room(remove, active_rooms[i]) == FAILURE)
+                noerr_msg("serv_remove_client: Something failed removing");
+            free(remove->active_rooms[i];
+            remove->active_rooms = NULL;
+        }
+    }
+
+    /* TODO: Remove tx and rx if they even get used.. */
+    
+    /* free remaining client information and the former client list. */
+    FREE_ALL(remove->name, remove, old_list);
 
     return new_list;
 } /* end serv_remove_client() */
@@ -167,6 +180,34 @@ int serv_rem_from_room(struct_room_list *rooms, char *room_name, char *cli_name)
     return room_remove_user(&rooms->rooms, room_name, cli_name);
 }
 
+int serv_add_active_room(struct_cli_info *cli, char *room_name)
+{
+    int i;
+    
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (cli->active_rooms[i] == NULL) {
+            cli->active_rooms[i] = CALLC_ARRAY(char, strlen(room_name)+1);
+            if (!cli->active_rooms[i])
+                errExit("serv_add_active_room: active_room failed to CALLOC.");
+            strcpy(cli->active_rooms[i], room_name);
+            return SUCCESS;
+        }
+    }
+    return FAILURE; /* you are at max number of rooms */
+} /* end serv_add_active_room */
+
+void serv_remove_active_room(struct_cli_info *cli, char *room_name)
+{
+    int i;
+
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (strcmp(cli->active_rooms[i], room_name) == 0) {
+            free(cli->active_rooms[i]);
+            cli->active_rooms[i] = NULL;
+            return;
+        }
+    }
+} /* end serv_remove_active_room */
 
 struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
                                      size_t size)

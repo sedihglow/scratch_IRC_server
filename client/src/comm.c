@@ -247,7 +247,7 @@ static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
                                 int type);
 
 static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
-                                int type) 
+                                int type, char *room_names, int room_name_size) 
 {
     uint8_t *tx;
     int i;
@@ -278,19 +278,26 @@ static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
     return SUCCESS;
 } /* end com_logout_exit_send */
 
+
+int com_send_exit_message(char *cli_name, struct_serv_info *serv_info,
+                          char *room_list, int room_list_size)
+{
+    return com_logout_exit_send(cli_name, serv_info, RC_EXIT, room_list,
+                                 room_list_size);
+} /* end com_send_exit_message */
+
+
+
 /* 
  *  com_send_logout_message
  *
  * TODO: This should not be used since not implemented on server side until
  *       persistent user credentials happen.
- */
 int com_send_logout_message(char *cli_name, struct_serv_info *serv_info)
 {
     return com_logout_exit_send(cli_name, serv_info, RC_LOGOUT);
-} /* end com_send_logout_message */
+}
+*/
 
-int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
-{
-    return com_logout_exit_send(cli_name, serv_info, RC_EXIT);
-} /* end com_send_exit_message */
+
 /******* EOF ******/

@@ -34,11 +34,13 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
 struct_cli_info* serv_find_client(char *find, int fd, struct_cli_info **cli_list, 
                                   size_t size);
 
-struct_cli_info* serv_find_fd_client(char *find, int fd, struct_cli_info **cli_list, 
+struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list, 
                                      size_t size);
 
 void serv_remove_active_room(struct_cli_info *cli, char *room_name);
 int serv_add_active_room(struct_cli_info *cli, char *room_name);
+
+void serv_free_client(struct_room_list *rooms, struct_cli_info *cli);
 
 /* TODO: Fuctions that call room.c should be here. Will fix scope if time and
  * have irc_server.c call functions out of server.h only.

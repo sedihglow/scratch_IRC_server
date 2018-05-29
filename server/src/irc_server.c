@@ -226,8 +226,7 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
         serv_add_to_room(irc_info->rooms, DfLT_CLI_ROOM, cli->name);
 
         /* let client know success */
-        ret = com_send_logon_result(cli->sockfd, 
-                                    LOGON_SUCCESS);
+        ret = com_send_logon_result(cli->sockfd, LOGON_SUCCESS);
         if (ret == FAILURE) {
             err_msg("irc_accept_new_cli: failed to send logon response");
             return FAILURE;
@@ -274,6 +273,8 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
         irc_info->cli_list = ret;
 
     --(irc_info->num_clients);
+
+    serv_free_client(irc_info->rooms, cli_info);
 
     shutdown(cli_info->sockfd, SHUT_RDWR);
 
@@ -351,8 +352,7 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     }
 
     /* make sure client is in the room before sending the message. */
-    ret = room_check_for_client(cli_msg->cli_name, irc_info->cli_list, 
-                                irc_info->num_clients);
+    ret = room_check_for_client(cli_msg->cli_name, working_room);
     if (ret == FAILURE) /* client was not in the room. */
         return FAILURE;
 
@@ -373,11 +373,12 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     for (i=0; i < _R_USR_MAX; ++i) {
         if (working_room->room_users[i]) {
 
-            cli = serv_find_client(working_room->room_users[i], 0, irc_info->cli_list, 
-                             irc_info->num_clients);
+            cli = serv_find_client(working_room->room_users[i], 0, 
+                                   irc_info->cli_list, irc_info->num_clients);
             if (!cli) {
-                errnum_msg("irc_cli_msg_cmd: Client in room shouldnt exist?");
-                return FAILURE:
+                errnum_msg(EINVAL, "irc_cli_msg_cmd: Client in room but not"
+                                    "in client list");
+                return FAILURE;
             }
             com_send_room_message(cli->sockfd, cli->name, room_name, input);
         }
@@ -456,7 +457,7 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     }
     
     /* remove from clients active room list */
-    serv_remove_active_room(struct_cli_info *cli, char *room_name);
+    serv_remove_active_room(cli, cli_msg->msg);
 
     /* let client know they left the room successfully and can update. */
     return com_send_leave_result(cli->sockfd, cli->name, _REPLY_SUCCESS);
@@ -483,14 +484,9 @@ int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     /* ack client */
     com_send_exit_message(cli->sockfd);
 
-
-    shutdown
-    /* leave all rooms on server */
-
-    /* deallocate client struct */
-
-    /* shutdown port */
-} /* enc_cli_exit_cmd */
+    irc_shutdown_client(irc_info, cli);
+    return SUCCESS;
+} /* end cli_exit_cmd */
 
 /*******************************************************************************
  * irc_handle_cli

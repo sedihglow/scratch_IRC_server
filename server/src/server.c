@@ -73,6 +73,31 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
     return new_list;
 } /* end serv_add_client() */
 
+
+
+/* Free's the client passed */
+void serv_free_client(struct_room_list *rooms, struct_cli_info *cli)
+{
+    int i, ret;
+
+    /* remove from all active rooms, free active room list */
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (cli->active_rooms[i]) {
+            ret = serv_rem_from_room(rooms, cli->active_rooms[i],
+                                     cli->name);
+            if (ret == FAILURE)
+                noerr_msg("serv_free_client: Something failed removing");
+            free(cli->active_rooms[i]);
+            cli->active_rooms[i] = NULL;
+        }
+    }
+
+    /* TODO: Remove tx and rx if they even get used.. */
+    
+    /* free remaining client information and the former client list. */
+    FREE_ALL(cli->name, cli);
+} /* end serv_free_client */
+
 /******************************************************************************
  *  serv_remove_client
  *
@@ -85,6 +110,7 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
                                      size_t old_size, int sockfd)
 {
     unsigned int i, j;
+    int ret;
     struct_cli_info **new_list;
     struct_cli_info *remove = NULL;
 
@@ -119,21 +145,6 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
             ++j;
         }
     }
-
-    /* remove from all active rooms, free active room list */
-    for (i=0; i < _R_ROOM_MAX; ++i) {
-        if (remove->active_rooms[i]) {
-            if (serv_rem_from_room(remove, active_rooms[i]) == FAILURE)
-                noerr_msg("serv_remove_client: Something failed removing");
-            free(remove->active_rooms[i];
-            remove->active_rooms = NULL;
-        }
-    }
-
-    /* TODO: Remove tx and rx if they even get used.. */
-    
-    /* free remaining client information and the former client list. */
-    FREE_ALL(remove->name, remove, old_list);
 
     return new_list;
 } /* end serv_remove_client() */
@@ -186,7 +197,7 @@ int serv_add_active_room(struct_cli_info *cli, char *room_name)
     
     for (i=0; i < _R_ROOM_MAX; ++i) {
         if (cli->active_rooms[i] == NULL) {
-            cli->active_rooms[i] = CALLC_ARRAY(char, strlen(room_name)+1);
+            cli->active_rooms[i] = CALLOC_ARRAY(char, strlen(room_name)+1);
             if (!cli->active_rooms[i])
                 errExit("serv_add_active_room: active_room failed to CALLOC.");
             strcpy(cli->active_rooms[i], room_name);

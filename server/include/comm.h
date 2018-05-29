@@ -19,8 +19,10 @@
 
 #define LQ_SIZE 15  /* the backlog queue suggested in listen() */
 
-#define LOGON_SUCCESS _LOGON_SUCCESS
-#define LOGON_FAILURE _LOGON_FAILURE
+#define LOGON_SUCCESS _REPLY_SUCCESS
+#define LOGON_FAILURE _REPLY_FAILURE
+#define JOIN_SUCCESS  _REPLY_SUCCESS
+#define JOIN_FAILURE  _REPLY_FAILURE
 
 int open_connection(struct_serv_info *serv_info);
 int init_server_comm(struct_serv_info *serv_info);
@@ -28,5 +30,8 @@ ssize_t send_to_client(int sockfd, uint8_t *tx, size_t len, int flags);
 ssize_t receive_from_client(int sockfd, uint8_t *rx, size_t len, int flags);
 
 struct_cli_message* com_parse_cli_message(uint8_t *rx);
-int com_send_logon_result(int fd, int payload);
 
+int com_send_logon_result(int fd, int payload);
+int com_send_join_result(int fd, uint8_t res);
+
+int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg);

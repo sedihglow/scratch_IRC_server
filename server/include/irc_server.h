@@ -15,7 +15,7 @@ typedef struct irc_info {
     int num_fds;        /* current fd list size */
     struct_serv_info *serv_info;
     struct_cli_info **cli_list; /* memory handled in add/remove functions */
-    struct_room_list *rooms; /* TODO: Allocation and deallocation not done in init yet */
+    struct_room_list *rooms;
     int num_clients;
 } struct_irc_info;
 
@@ -37,11 +37,13 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli);
 int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 
-/* unimplemented */
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 
 
 int irc_send_msg_to_cli_tx(struct_cli_info *cli_info, char *msg);
+
+
+int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 /***** EOF *****/
 

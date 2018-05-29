@@ -21,7 +21,7 @@ struct_io_ring* com_init_io_ring(void)
 void com_free_serv_info(struct_serv_info *dest)
 {
     _com_free_serv_info(dest);
-}
+} /* end com_free_serv_info */
 
 void com_free_io_ring(struct_io_ring *dest)
 {
@@ -147,7 +147,6 @@ int com_send_logon_message(char *name, struct_serv_info *serv_info)
     return SUCCESS;
 } /* end com_send_logon_message */
 
-
 int com_get_logon_result(int fd)
 {
     uint8_t rx[_COM_IO_BUFF] = {'\0'};
@@ -160,4 +159,138 @@ int com_get_logon_result(int fd)
 
     return SUCCESS;
 } /* end com_get_logon_message */
+
+int com_send_chat_message(char *name, char *msg, struct_serv_info *serv_info)
+{
+    uint8_t *tx;
+    int i;
+    size_t name_len = strlen(name) + 1;
+    size_t msg_len  = strlen(msg)  + 1;
+    size_t tx_len = MSG_TYPE_SIZE + name_len + msg_len + 1;
+
+    tx = CALLOC_ARRAY(uint8_t, tx_len);
+    if (!tx)
+        errExit("Failed to allocate TX, download more ram.");
+   
+    i = 0;
+    strncpy((char*)(tx+i), name, name_len);
+    i += name_len;
+    tx[i] = RC_MSG;
+    ++i;
+    strncpy((char*)(tx+i), msg, msg_len);
+    i += msg_len;
+    tx[i] = '\r';
+    
+    send_to_server(serv_info->sockfd, tx, tx_len, NO_FLAGS);
+    
+    free(tx);
+    return SUCCESS;
+} /* end com_send_chat_message */
+
+
+static int com_join_leave_send(char *cli_name, char *room_name,
+                               struct_serv_info *serv_info, int type);
+
+
+static int com_join_leave_send(char *cli_name, char *room_name,
+                               struct_serv_info *serv_info, int type)
+{
+    uint8_t *tx;
+    int i;
+    size_t name_len  = strlen(cli_name)  + 1;
+    size_t room_len  = strlen(room_name) + 1;
+    size_t tx_len = name_len + MSG_TYPE_SIZE + room_len + 1;
+
+    tx = CALLOC_ARRAY(uint8_t, tx_len);
+    if (!tx)
+        errExit("com_send_join_request: tx could not calloc");
+   
+    /* set client name field */
+    i = 0;
+    strncpy((char*)(tx+i), cli_name, name_len);
+    i += name_len;
+
+    /* set type byte */
+    if (type == RC_JOIN)
+        tx[i] = RC_JOIN;
+    else if (type == RC_LEAVE)
+        tx[i] = RC_LEAVE;
+    else
+        return FAILURE;
+    ++i;
+    
+    /* set room name payload */
+    strncpy((char*)(tx+i), room_name,  room_len);
+    i += room_len;
+    tx[i] = '\r';
+
+    send_to_server(serv_info->sockfd, tx, tx_len, NO_FLAGS);
+
+    free(tx);
+    return SUCCESS;
+} /* end com_join_leave_send */
+
+int com_send_join_message(char *cli_name, char *room_name,  
+                          struct_serv_info *serv_info)
+{
+    return com_join_leave_send(cli_name, room_name, serv_info, RC_JOIN);
+} /* end com_send_join_request */
+
+int com_send_leave_message(char *cli_name, char *room_name, 
+                           struct_serv_info *serv_info)
+{
+    return com_join_leave_send(cli_name, room_name, serv_info, RC_LEAVE);
+} /* end com_send_leave_message */
+
+
+static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
+                                int type);
+
+static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
+                                int type) 
+{
+    uint8_t *tx;
+    int i;
+    size_t name_len = strlen(cli_name) + 1;
+    size_t tx_len  = name_len + MSG_TYPE_SIZE + 1;
+
+    tx = CALLOC_ARRAY(uint8_t, tx_len);
+    if (!tx)
+        errExit("com_send_join_request: tx could not calloc");
+  
+    /* set client name field */
+    i = 0;
+    strncpy((char*)(tx+i), cli_name, name_len);
+    i += name_len;
+
+    /* set type byte */
+    if (type == RC_EXIT)
+        tx[i] = RC_EXIT;
+    else if (type == RC_LOGOUT)
+        tx[i] = RC_LOGOUT;
+    else
+        return FAILURE;
+    ++i;
+
+    send_to_server(serv_info->sockfd, tx, tx_len, NO_FLAGS);
+
+    free(tx);
+    return SUCCESS;
+} /* end com_logout_exit_send */
+
+/* 
+ *  com_send_logout_message
+ *
+ * TODO: This should not be used since not implemented on server side until
+ *       persistent user credentials happen.
+ */
+int com_send_logout_message(char *cli_name, struct_serv_info *serv_info)
+{
+    return com_logout_exit_send(cli_name, serv_info, RC_LOGOUT);
+} /* end com_send_logout_message */
+
+int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
+{
+    return com_logout_exit_send(cli_name, serv_info, RC_EXIT);
+} /* end com_send_exit_message */
 /******* EOF ******/

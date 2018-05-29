@@ -144,8 +144,7 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
     return new_msg;
 } /* end parse_cli_message() */
 
-
-int com_send_logon_result(int fd, int payload)
+int com_send_logon_result(uint8_t fd, uint8_t payload)
 {
     int ret;
     uint8_t tx[_LOGON_REPLY_SIZE] = {RC_LOGON, payload, '\r'};
@@ -158,4 +157,22 @@ int com_send_logon_result(int fd, int payload)
     printf("sending logon result SUCCESS.\n");
     return SUCCESS;
 } /* end com_send_logon_result */
+
+
+int com_send_join_result(int fd, uint8_t res)
+{
+
+
+} /* end com_send_join_result */
+
+int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg)
+{
+
+
+
+} /* end com_send_room_message */
+
+
+
+
 /******* EOF *******/

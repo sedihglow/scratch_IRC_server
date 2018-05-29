@@ -51,4 +51,6 @@ int room_add_history(rbTree *room_list, char *room_name, char *msg);
 int room_add_user(rbTree *room_list, char *room_name, char *cli_name);
 int room_remove_user(rbTree *room_list, char *room_name, char *cli_name);
 int room_free(rbTree *room_list, char *room_name);
+
+int room_check_for_client(char *cli_name, struct_room_info *room_info);
 //int room_check_pw();

@@ -67,6 +67,7 @@ typedef struct friend_list {
 
 typedef struct client_info {
     struct_room_info *rooms[R_ROOM_MAX];
+    int current_r;            /* index of current room */
     int room_count;           /* number of rooms the client is in. */
     char *name;
     struct_flist *f_list;
@@ -78,15 +79,8 @@ void cli_free_info(struct_client_info *dest);
 /* Sets the client information for a first successful server connection */
 int cli_set_new_cli_info(struct_client_info *cli_info, char *name);
 
-
 /* Handles friend list functionality, helper functions are static  */
 int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname);
-
-/* Handle clients room situations */
-int cli_request_room(struct_client_info *client);
-
-
-
 
 
 /* TODO: Might not have time to implement 

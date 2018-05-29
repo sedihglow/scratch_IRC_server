@@ -85,6 +85,7 @@ int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
     cli_info->rooms[0]->room_name = strncpy(cli_info->rooms[0]->room_name, 
                                             R_DFLT_ROOM, sizeof(R_DFLT_ROOM));
     cli_info->room_count = 1;
+    cli_info->current_r = 0;
 
     /* Should be a function for this shit
     cli_info->rooms = CALLOC(struct_room_info);
@@ -110,7 +111,7 @@ static int cli_remove_friend(struct_flist *flist, char *fname);
 static void cli_display_friends(struct_flist *flist)
 {
     int i;
-    printf("---- Friends ----\n Total on list: %d", flist->fcount);
+    printf("---- Friends ----\n Total on list: %d\n\n", flist->fcount);
 
     for (i=0; i < F_MAX; ++i) {
         if (flist->list[i])
@@ -130,6 +131,7 @@ static int cli_add_friend(struct_flist *flist, char *fname)
         if (!flist->list[i]) {               /* find open spot */
             my_strdup(flist->list[i], fname, strlen(fname)+1); /* duplicate */
             if (flist->list[i]) {            /* error check */
+                ++flist->fcount;
                 return SUCCESS;
             } else {
                 err_msg("cli_add_friend: strdup failed, ret NULL.");
@@ -166,8 +168,18 @@ static int cli_remove_friend(struct_flist *flist, char *fname)
 } /* end remove_friend */
 
 
-/* fname gets ignored in RC_FL
- */
+/******************************************************************************* 
+ * cli_handle_flist
+ *
+ * take a request from the user and execute the proper function.
+ *
+ * Acceptable commands, RC_FL, RC_FA, RC_FR
+ *
+ * fname gets ignored in RC_FL
+ *
+ * returns SUCCESS, request accomplished.
+ *         FAILURE, invalid command type for flist
+ ******************************************************************************/
 int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname)
 {
     int ret; 
@@ -189,21 +201,6 @@ int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname)
     }
     return ret; 
 }/* end cli_handle_flist */
-
-/*******************************************************************************
- * Command: /join 
- ******************************************************************************/
-int cli_request_room(struct_client_info *client)
-{
-    return 0;
-} /* end request_room */
-
-
-
-
-
-
-
 
 
 #if 0

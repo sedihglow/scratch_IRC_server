@@ -21,7 +21,14 @@ int request_who(char *name, bool *online);
 
 /* sends properly built message to the server. */
 int com_send_logon_message(char *name, struct_serv_info *serv_info);
-int com_send_chat_message(char *name, struct_serv_info *serv_info);
+int com_send_chat_message(char *name, char *msg, struct_serv_info *serv_info);
+int com_send_join_message(char *cli_name, char *room_name,
+                          struct_serv_info *serv_info);
+int com_send_leave_message(char *cli_name, char *room_name, 
+                           struct_serv_info *serv_info);
+
+int com_send_logout_message(char *cli_name, struct_serv_info *serv_info);
+int com_send_exit_message(char *cli_name, struct_serv_info *serv_info);
 
 
 

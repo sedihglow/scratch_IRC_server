@@ -7,6 +7,7 @@
 #include "irc_client.h"
 
 static volatile bool g_serv_crashed = false;
+static volatile bool g_user_logout  = false;
 
 
 /******************************************************************************* 
@@ -45,6 +46,8 @@ static int find_fcmd(char *input)
     return RC_ERR;
 } /* end find_fcmd */
 
+#if 0
+/* TODO: These might not get implemented due to time. Clean up final version. */
 static int find_bcmd(char *input)
 {
     int ret;
@@ -74,6 +77,7 @@ static int find_inv_cmd(char *input)
 
     return RC_ERR;
 }
+#endif /* end comment block */
 
 static int find_room_cmd(char *input)
 {
@@ -106,9 +110,11 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
     int ret;
     int type;
+    int len;
+    char *cli_name = irc_info->client->name;
     
     if (input[0] != '/') {
-        return com_send_chat_message(irc_info->client->name, 
+        return com_send_chat_message(cli_name, input,
                                      irc_info->serv_info);
     }
 
@@ -117,69 +123,101 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         type = find_fcmd(input+3);
         if (type == RC_FL)
             ret = cli_handle_flist(type, irc_info->client, NULL);
-        else
+        else if (type == RC_FA || type == RC_FR)
             ret = cli_handle_flist(type, irc_info->client, input+5);
-
+        else
+            return FAILURE; /* invalid command */
         return ret;
     }
 
-    ret = strncmp(input, "/b ", 3);
+    len = sizeof(JOIN); /* includes '\0' */
+    ret = strncmp(input, JOIN, len-1);
     if (ret == 0) {
-        find_bcmd(input+3);
+        if (input[len-1] == ' ') {
+            ret = com_send_join_message(cli_name, input+len, irc_info->serv_info);
+            return ret;
+        } else {
+            return FAILURE; /* invalid command */
+        }
     }
 
-    ret = strncmp(input, WHO, sizeof(WHO)-1);
+    len = sizeof(LEAVE);
+    ret = strncmp(input, LEAVE, len-1);
     if (ret == 0) {
-        RC_WHO;
+        if (input[len-1] == ' ') {         /* leave specified room */
+            ret = com_send_leave_message(cli_name, input+len, 
+                                         irc_info->serv_info);
+        } else if (input[len-1] == '\0') { /* leave current room */
+            ret = com_send_leave_message(cli_name,
+                        irc_info->client->rooms[irc_info->client->current_r],
+                        irc_info->serv_info);
+        } else {
+            return FAILURE; /* invalid command */
+        }
+        return ret;
     }
 
-    ret = strncmp(input, JOIN, sizeof(JOIN)-1);
+    len = sizeof(EXIT_IRC);
+    ret = strncmp(input, EXIT_IRC, len-1);
     if (ret == 0) {
-        RC_JOIN;
-    }
-
-    ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT)-1);
-    if (ret == 0) {
-        RC_LOGOUT;
-    }
-
-    ret = strncmp(input, INV, sizeof(INV)-1);
-    if (ret == 0) {
-        find_inv_cmd(input);
+        if (input[len-1] == '\0') {
+            ret = com_send_exit_message(cli_name, irc_info->serv_info);
+            if (ret == FAILURE)
+                return FAILURE;
+            return RC_EXIT; 
+        } else {
+            return FAILURE;
+        }
     }
 
     ret = strncmp(input, ROOM_L, sizeof(ROOM_L)-1);
     if (ret == 0) {
-        find_room_cmd(input+5);
+    //    find_room_cmd(input+5);
     }
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG)-1);
     if (ret == 0) {
-        RC_PM;
+    //    RC_PM;
     }
 
     /* This needs to be AFTER comparing ROOM_L since both start with /r */
     ret = strncmp(input, PRIV_REP, sizeof(PRIV_REP)-1);
     if (ret == 0) {
-        RC_PR;
+    //    RC_PR;
     }
 
     ret = strncmp(input, VOID, sizeof(PRIV_REP)-1);
     if (ret == 0) {
-        RC_VOID;
+    //    RC_VOID;
     }
 
-    ret = strncmp(input, EXIT_IRC, sizeof(EXIT_IRC)-1);
+    return com_send_chat_message(irc_info->client->name, input,
+                                 irc_info->serv_info);
+
+/*
+ * TODO: Not implemented on server side since we are not doing persistant 
+ *       client credentials yet.
+    ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT)-1);
     if (ret == 0) {
-        RC_EXIT;
+        ret = com_send_logout_message(cli_name, irc_info->serv_info);
+        if (ret == FAILURE)
+            return FAILURE;
+        return RC_LOGOUT; 
     }
-    
-    return com_send_chat_message(irc_info->client->name, irc_info->serv_info);
+*/
 
+/* TODO: Not implemented due to time 
+    ret = strncmp(input, "/b ", 3);
+    if (ret == 0) {
+    //    find_bcmd(input+3);
+    }
 
-
-
-} /* end parse_args */
+    ret = strncmp(input, WHO, sizeof(WHO)-1);
+    if (ret == 0) {
+      //  RC_WHO;
+    }
+*/
+} /* end irc_handle_user_input */
 
 void* irc_handle_server_requests(void *args)
 {
@@ -379,32 +417,19 @@ void irc_client(void)
     if (ret)
         errnumExit(ret, "irc_client: Failed to create recv thread.");
 
-    ret = pthread_detach(t_id); /* i shouldnt need to ret anything */
-    if (ret)
-        errnumExit(ret, "irc_client: Failed to detach recv thread.");
-
-    /* TODO: Figure out exit flag after you figure out getting input from user */
     for ( ;; ) { 
-        
-        
-    }
-
-#if 0
         input = irc_get_user_input();
-        if (input == NULL) {
-            noerr_msg("irc_client: strange, nothing read...");
-            continue;
+        ret = irc_handle_user_input(irc_info, input);
+
+        if (ret == FAILURE) {
+            printf("- INVALID COMMAND -");
+        } else if (ret == RC_LOGOUT) {
+            pthread_join(t_id, NULL); /* wait for server response and thread close */
+            free(input);
+            break;
         }
-    }
-
-    printf("after send");
-    
-    if (input)
         free(input);
-#endif
-
-
-//    send_to_server(irc_info->serv_info->sockfd, "james\0\x11\r", sizeof("james\0\x11\r"), 0);
+    }
 
     irc_free_info(irc_info);
 } /* end irc_client() */

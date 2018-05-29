@@ -62,9 +62,11 @@
 #define RC_HB     0x14
 
 
-/* return payloads */
-#define _LOGON_SUCCESS 1
-#define _LOGON_FAILURE 0
+/* server to client reply success/failure */
+#define _REPLY_SUCCESS 1
+#define _REPLY_FAILURE 0
+
+/* length of the reply to logon. */
 #define _LOGON_REPLY_SIZE 3
 
 typedef struct server_info {

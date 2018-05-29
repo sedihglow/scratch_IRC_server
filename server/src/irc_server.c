@@ -184,8 +184,8 @@ void irc_free_info(struct_irc_info *irc_info)
     free(irc_info);
 } /* end irc_free_info() */
 
-
-/* Returns success or failure.
+/******************************************************************************* 
+ * Returns success or failure.
  *
  * Failure means name is taken and client is removed from all lists and can
  * try again.
@@ -198,7 +198,7 @@ void irc_free_info(struct_irc_info *irc_info)
  *       to access at the same time when the username is taken :/
  *
  *       Maybe send cli_info into serv_remove_client
- */
+ ******************************************************************************/
 int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli) 
 {
@@ -310,10 +310,9 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
     irc_info->full_fd_list = irc_add_fd_list(irc_info, cli_info->sockfd);
     ++(*nfds);
 
-    /* add new potential client to client list, if following logon
-     * message fails, it will be deallocated with the shit dealloc
-     * realloc structure because no time to make legit data
-     * structures. /wrists.
+    /* 
+     * add new potential client to client list, if following logon
+     * message fails.
      */
     irc_info->cli_list = serv_add_client(&cli_info, irc_info->cli_list, 
                                          irc_info->num_clients);
@@ -321,11 +320,17 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
 } /* irc_take_new_connection */
 
 /*
- * msg format RC_MSG: name | type | current room | input 
+ * Incoming client msg format: name | RC_MSG | current room | input 
+ * Response to client msg format : RC_MSG | client sending | room name | msg 
+ *
+ * TODO: If time, make a special response for failures instead of ignoring them
+ *
+ *       client must update history only on recieving a response with the
+ *       string that was replyed.
  */
 int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    int i, len;
+    int i, ret, len;
     char room_name[ROOM_NAME_MAX] = {'\0'};
     char input[MSG_STR_LEN_MAX]   = {'\0'};
     struct_room_info *working_room;
@@ -333,41 +338,54 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     
     /* get current room string */
     len = strlen(cli_msg->msg) + 1; // includes '\0'
-    if (len > ROOM_NAME_MAX) {
+    if (len > ROOM_NAME_MAX) { /* room name too long, therefore not real. */
         noerr_msg("irc_cli_msg_cmd: Room name provided too long");
         return FAILURE;
     }
     for (i=0; i < len; ++i)
         room_name[i] = cli_msg->msg[i];
 
+    working_room = room_find(&irc_info->rooms->rooms, room_name);
+    if (!working_room) { /* room does not exist */
+        noerr_msg("irc_cli_msg_cmd: Room does not exist");
+        return FAILURE;
+    }
+
+    /* make sure client is in the room before sending the message. */
+    ret = room_check_for_client(cli_msg->cli_name, irc_info->cli_list, 
+                                irc_info->num_clients);
+    if (ret == FAILURE) /* client was not in the room. */
+        return FAILURE;
+
+
     /* get message for the room */
     for (; i < MSG_STR_LEN_MAX && cli_msg->msg[i] != '\r'; ++i)
         input[i] = cli_msg->msg[i];
 
     /* add new message to room history */
-    room_add_history(&irc_info->rooms->rooms, room_name, input);
-    
-    working_room = room_find(&irc_info->rooms->rooms, room_name);
-
-    /* TODO: Send new history information to all clients in the room.
-     *       place in buffer and make select read writes as well?
-     *       send then.
-     */
-
-    /* broadcast to all clients in the room about the message.
-     * msg format: RC_MSG | client sending | room name | msg 
-     */
+    ret = room_add_history(&irc_info->rooms->rooms, room_name, input);
+    if (ret == FAILURE) {
+        noerr_msg("irc_cli_msg_cmd: Issue with room_add_history.");
+        return FAILURE;
+    }
 
 
-    len = working_room->num_users;
-    for (i=0; i < len; ++i) {
-        cli = serv_find_client(working_room->room_users[i], 0, irc_info->cli_list, 
-                         irc_info->num_clients);
+    /* broadcast to all clients in the room about the message. */
+    for (i=0; i < _R_USR_MAX; ++i) {
+        if (working_room->room_users[i]) {
+
+            cli = serv_find_client(working_room->room_users[i], 0, irc_info->cli_list, 
+                             irc_info->num_clients);
+            if (!cli) {
+                errnum_msg("irc_cli_msg_cmd: Client in room shouldnt exist?");
+                return FAILURE:
+            }
+            com_send_room_message(cli->sockfd, cli->name, room_name, input);
+        }
     }
     
     return SUCCESS;
 } /* end irc_cli_msg_cmd */
-
 
 /******************************************************************************
  *  irc_cli_join_cmd
@@ -380,7 +398,9 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  *
  *  FAILURE state occurs if room attempting to join is full.
  *
- *  TODO: Use errno to identify the error
+ *  TODO: Use errno to identify the error?
+ *
+ *  Reply Message format: RC_MSG | uint8_t T/F | \r
  *
  ******************************************************************************/
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
@@ -389,13 +409,14 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     /* add client to the room if there is space */
     ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli_msg->cli_name);
     if (ret == FAILURE) {
-        /* TODO: Send message to client that the room was full, try again */
+        com_send_join_result(irc_info->serv_info->sockfd, 0x0);
         return FAILURE;
     }
+    /* client successfully added to room, let them know. */
+    com_send_join_result(irc_info->serv_info->sockfd, 0x1);
 
     return SUCCESS;
 } /* end irc_cli_join_cmd */
-
 
 /* 
  * leave a particular room.
@@ -410,6 +431,14 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
         return FAILURE;
     }
 } /* irc_cli_leave_cmd */
+
+
+int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
+{
+    /* deallocate all client information */
+
+    /* shutdown port */
+} /* enc_cli_exit_cmd */
 
 /*******************************************************************************
  * irc_handle_cli
@@ -476,6 +505,20 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
         }
     break;
 
+    case RC_EXIT:
+        /* client is about to shutdown, 
+         * feel free to drop them from all the things.
+         * msg format: cli_name | RC_EXIT
+         */
+        if (irc_cli_exit_cmd(irc_info, cli_msg) == FAILURE) {
+            _com_free_cli_message(cli_msg);
+            return FAILURE;
+        }
+
+    break;
+
+
+
     case RC_R_MSG:
     /* Send a message to a particular room.
      * msg format: cli_name | RC_R_MSG | room name | msg
@@ -486,11 +529,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 
 
 
-    case RC_EXIT:
-    /* client is about to shutdown, feel free to drop them from all the things.
-     * msg format: cli_name | RC_EXIT
-     */
-    break;
 
 
     case RC_VOID:
@@ -577,7 +615,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     default:
         errnum_msg(EINVAL, "Invalid type of msg");
         return FAILURE;
-
     }
 
     _com_free_cli_message(cli_msg);
@@ -654,7 +691,7 @@ void irc_server(void)
         for (i=0; i < irc_info->num_clients; ++i) {
             ret = FD_ISSET((irc_info->cli_list)[i]->sockfd, &readfds);
             if (ret)
-                irc_handle_cli(irc_info, (irc_info->cli_list)[i]);
+                ret = irc_handle_cli(irc_info, (irc_info->cli_list)[i]);
         }
     } // end while
 } /* end irc_server */

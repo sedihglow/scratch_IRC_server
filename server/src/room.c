@@ -123,7 +123,30 @@ int room_remove_user(rbTree *room_list, char *room_name, char *cli_name)
     return _room_remove_user(room, cli_name);
 } /* end room_remove_user */
 
-int room_free(rbTree *room_list, char *room_name) {
+int room_free(rbTree *room_list, char *room_name) 
+{
     return (remove_first(room_list, room_name) ? SUCCESS : FAILURE);
-}
+} /* end room_free */
+
+
+
+/* 
+ * TODO NOTE: These functions with these arrays are so awful when scaled. Need real
+ * structurs for this stuff if i had more time.
+ */
+int room_check_for_client(char *cli_name, struct_room_info *room_info)
+{
+    int i;
+
+    for (i=0; i < _R_USR_MAX; ++i) {
+        if (room_info->room_users[i]) {
+            if (strcmp(cli_name, room_info->room_users[i]) == 0)
+                return SUCCESS;
+        }
+    }
+    return FAILURE;
+} /* end room_check_for_client */
+
+
+
 /***** EOF *****/

@@ -46,38 +46,6 @@ static int find_fcmd(char *input)
     return RC_ERR;
 } /* end find_fcmd */
 
-#if 0
-/* TODO: These might not get implemented due to time. Clean up final version. */
-static int find_bcmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "l ", 2);
-    if (ret == 0)
-        return RC_BL;
-
-    ret = strncmp(input, "a", 2);
-    if (ret == 0)
-        return RC_BA;
-
-    ret = strncmp(input, "r ", 2);
-    if (ret == 0)
-        return RC_BR;
-
-    return RC_ERR;
-} /* end find_bcmd */
-
-static int find_inv_cmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "inv ", 4);
-    if (ret == 0)
-        return RC_INV;
-
-    return RC_ERR;
-}
-#endif /* end comment block */
 
 static int find_room_cmd(char *input)
 {
@@ -110,7 +78,6 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
     int ret, type, len;
     char *cli_name = irc_info->client->name;
-    char *room_names;
     
     if (input[0] != '/') {
         return com_send_chat_message(cli_name, input,
@@ -151,8 +118,8 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
                                          irc_info->serv_info);
         } else if (input[len-1] == '\0') { /* leave current room */
             ret = com_send_leave_message(cli_name,
-                        irc_info->client->rooms[irc_info->client->current_r],
-                        irc_info->serv_info);
+                  irc_info->client->rooms[irc_info->client->current_r]->room_name,
+                  irc_info->serv_info);
         } else {
             return FAILURE; /* invalid command */
         }
@@ -196,30 +163,6 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 
     return com_send_chat_message(irc_info->client->name, input,
                                  irc_info->serv_info);
-
-/*
- * TODO: Not implemented on server side since we are not doing persistant 
- *       client credentials yet.
-    ret = strncmp(input, LOG_OUT, sizeof(LOG_OUT)-1);
-    if (ret == 0) {
-        ret = com_send_logout_message(cli_name, irc_info->serv_info);
-        if (ret == FAILURE)
-            return FAILURE;
-        return RC_LOGOUT; 
-    }
-*/
-
-/* TODO: Not implemented due to time 
-    ret = strncmp(input, "/b ", 3);
-    if (ret == 0) {
-    //    find_bcmd(input+3);
-    }
-
-    ret = strncmp(input, WHO, sizeof(WHO)-1);
-    if (ret == 0) {
-      //  RC_WHO;
-    }
-*/
 } /* end irc_handle_user_input */
 
 
@@ -440,4 +383,38 @@ void irc_client(void)
 
     irc_free_info(irc_info);
 } /* end irc_client() */
+
 /****** EOF ******/
+
+#if 0
+/* TODO: These might not get implemented due to time. Clean up final version. */
+static int find_bcmd(char *input)
+{
+    int ret;
+
+    ret = strncmp(input, "l ", 2);
+    if (ret == 0)
+        return RC_BL;
+
+    ret = strncmp(input, "a", 2);
+    if (ret == 0)
+        return RC_BA;
+
+    ret = strncmp(input, "r ", 2);
+    if (ret == 0)
+        return RC_BR;
+
+    return RC_ERR;
+} /* end find_bcmd */
+
+static int find_inv_cmd(char *input)
+{
+    int ret;
+
+    ret = strncmp(input, "inv ", 4);
+    if (ret == 0)
+        return RC_INV;
+
+    return RC_ERR;
+}
+#endif

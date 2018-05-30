@@ -9,6 +9,8 @@
 
 #include "irc_comm.h" // NOTE: holds struct_server_info and struct_io_ring
 
+#define IO_BUFF  _COM_IO_BUFF
+
 struct_serv_info* com_init_serv_info(void);
 struct_io_ring* com_init_io_ring(void);
 void com_free_serv_info(struct_serv_info *dest);

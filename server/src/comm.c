@@ -192,7 +192,7 @@ static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
     ++i;
     tx[i] = '\r';
 
-    return send_to_client(fd, tx, i+1, NOFLAGS);
+    return send_to_client(fd, tx, i+1, NO_FLAGS);
 } /* end com_send_join_leave_result */
 
 
@@ -210,16 +210,43 @@ int com_send_join_result(int fd, char *room_name, uint8_t res)
 /*
  * server to cli format: RC_LEAVE | room_name | res | \r
  */
-int com_send_leave_result(int fd, char *cli_name, uint8_t res)
+int com_send_leave_result(int fd, char *room_name, uint8_t res)
 {
     return com_send_join_leave_result(fd, room_name, res, RC_LEAVE);
 } /* end com_send_leave_result */
 
-int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg)
+/*
+ * server to cli format: RC_MSG | room_name | client name | msg | \r
+ */
+int com_send_room_message(int fd, char *room_name, char *cli_name, char *msg)
 {
+    int len, i;
+    uint8_t tx[IO_BUFF] = {'\0'};
 
+    assert(cli_name && room_name && msg);
 
-    return SUCCESS;
+    i = 0;
+    tx[i] = RC_MSG;
+    ++i;
+
+    /* copy room name */
+    len = strlen(room_name) + 1;
+    strncpy((char*)(tx+i), room_name, len);
+    i += len;
+
+    /* copy client name */
+    len = strlen(cli_name) + 1;
+    strncpy((char*)(tx+i), cli_name, len);
+    i += len; 
+
+    /* copy message */
+    len = strlen(msg) + 1;
+    strncpy((char*)(tx+i), msg, len);
+    i += len;
+
+    tx[i] = '\r';
+
+    return send_to_client(fd, tx, i+1, NO_FLAGS);
 } /* end com_send_room_message */
 
 void com_send_exit_message(int fd) 

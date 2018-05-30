@@ -328,7 +328,7 @@ void display_room_welcome(char *room_name, int num_users)
 int irc_exec_client_response(struct_irc_info *irc_info, 
                              struct_serv_message *serv_msg)
 {
-    struct_cli_info *cli = irc_info->client;
+    struct_client_info *cli = irc_info->client;
 
     switch (serv_msg->type) {
 
@@ -336,7 +336,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
          
     break;
     case RC_JOIN: /* format: type | 0/1 | \r */
-    if (strcmp(cli->rooms->room_name, R_DFLT_ROOM) == 0) {
+    if (strcmp(cli->rooms[0]->room_name, R_DFLT_ROOM) == 0) {
         /* leave the void */
         room_free_info(cli->rooms[0]);
         cli->rooms[0] = NULL;
@@ -381,7 +381,7 @@ void* irc_handle_server_requests(void *args)
             pthread_exit(NULL);
         }
 
-        serv_msg = com_parse_server_msg(rx);
+        serv_msg = com_parse_server_msg((char*)rx);
         if (!serv_msg)
             errExit("irc_handle_server_request: serv_msg parse failure.");
        

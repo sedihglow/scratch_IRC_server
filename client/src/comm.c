@@ -149,10 +149,10 @@ int com_send_logon_message(char *name, struct_serv_info *serv_info)
 
 int com_get_logon_result(int fd)
 {
-    uint8_t rx[_COM_IO_BUFF] = {'\0'};
+    uint8_t rx[IO_BUFF] = {'\0'};
 
     /* should... block until data is recieved. */
-    receive_from_server(fd, rx, _COM_IO_BUFF, NO_FLAGS);
+    receive_from_server(fd, rx, IO_BUFF, NO_FLAGS);
 
     if (rx[0] != RC_LOGON || rx[1] == 0x0)
         return FAILURE;
@@ -292,7 +292,7 @@ int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
 struct_serv_message* com_parse_server_msg(char *input)
 {
     struct_serv_message *serv_msg;
-    char *tmp[IO_BUFF] = {'\0'};
+    char tmp[IO_BUFF] = {'\0'};
     int i, j, len;
 
     if (!input) {
@@ -316,8 +316,8 @@ struct_serv_message* com_parse_server_msg(char *input)
         return serv_msg;
 
     len = strlen(input+i) + 1;
-    serv->msg = CALLOC_ARRAY(char, len);
-    if (!serv->msg)
+    serv_msg->msg = CALLOC_ARRAY(char, len);
+    if (!serv_msg->msg)
         errExit("com_parse_server_msg: serv_msg msg calloc failure.");
 
     for(j=0; input[i] != '\r'; ++i, ++j)

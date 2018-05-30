@@ -415,7 +415,7 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     /* add client to the room if there is space */
     ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli->name);
     if (ret == FAILURE) {
-        com_send_join_result(cli->sockfd, _REPLY_FAILURE);
+        com_send_join_result(cli->sockfd, cli_msg->msg, _REPLY_FAILURE);
         return FAILURE;
     }
 
@@ -448,7 +448,7 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     ret = serv_rem_from_room(irc_info->rooms, cli_msg->msg, cli->name);
     if (ret == FAILURE) {
         /* send message to client about the failure */
-        com_send_leave_result(cli->sockfd, cli->name, _REPLY_FAILURE);
+        com_send_leave_result(cli->sockfd, cli_msg->msg, _REPLY_FAILURE);
         return FAILURE;
     }
     

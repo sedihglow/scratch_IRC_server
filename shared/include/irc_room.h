@@ -39,7 +39,6 @@ typedef struct room_info {
 struct_room_info* _room_init_info(bool pub, char *pw);
 void _room_free_info(struct_room_info *dest);
 struct_room_info* _room_get_copy(struct_room_info *src);
-int _room_add_user(struct_room_info *room, char *name); 
 
 int _room_add_user(struct_room_info *room, char *name);
 int _room_remove_user(struct_room_info *room, char *cli_name);

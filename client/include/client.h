@@ -32,15 +32,15 @@
  *                      Chat Room Definitions
  ******************************************************************************/
 #define WHO      "/who "          // /who <name>      : Search if a user exists
-#define JOIN     "/join "         // /join <channel>  : Join dat channel
-#define EXIT_IRC "/exit "         // /exit            : Get the fuck out
+#define JOIN     "/join"         // /join <channel>  : Join dat channel
+#define EXIT_IRC "/exit"          // /exit            : Get the fuck out
 #define VOID     "/void"          // /void            : Go to the void
  /* TODO: When leave happens, 
   *         The user is currently displaying that room.
   *             - change what room is being displayed, let server know
   *             - If it is the last room the user is in, go to VOID
   */
-#define LEAVE    "/leave "        // /leave <channel> : leave a channel
+#define LEAVE    "/leave"        // /leave <channel> : leave a channel
 #define LOG_OUT  "/logout "       //                  : Back to login screen.
 #define INVITE   "/invite "       // /invite <name>   : Invite to current room 
 #define INV      "/inv "          // /inv <name>      : Same as above

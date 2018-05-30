@@ -61,6 +61,7 @@ void cli_free_info(struct_client_info *dest)
     FREE_ALL(dest->name, dest->f_list->list, dest->f_list, dest);
 } /* end cli_free_info */
 
+
 int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
 {
     int len;

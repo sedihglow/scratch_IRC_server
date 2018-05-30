@@ -130,6 +130,8 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
     /* parse type, i is currently at next index of rx, type is 1 bytes */
     new_msg->type = rx[i];
     ++i; /* move past type index */
+    if (rx[i] == '\r')
+        return new_msg;
 
     /* parse msg if applicable, copies '\0' */
     memset(tmp, '\0', MSG_TYPE_SIZE); 
@@ -159,16 +161,58 @@ int com_send_logon_result(int fd, uint8_t payload)
 } /* end com_send_logon_result */
 
 
-int com_send_join_result(int fd, uint8_t res)
-{
+static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
+                                      uint8_t type);
 
-    return SUCCESS;
+static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
+                                      uint8_t type)
+{
+    int len, i, j;
+    uint8_t tx[IO_BUFF] = {'\0'};
+   
+    if (!room_name) {
+        errnum_msg(EINVAL, "com_send_join_result: room name was NULL.");
+        return FAILURE;
+    }
+
+    i = 0;
+    if (type == RC_JOIN)
+        tx[i] = RC_JOIN;
+    else if (type == RC_LEAVE)
+        tx[i] = RC_LEAVE;
+    else
+        return FAILURE;
+    ++i;
+    
+    len = strlen(room_name) + 1;
+    for (j=0; j < len; ++i, ++j)
+        tx[i] = room_name[j];
+
+    tx[i] = res;
+    ++i;
+    tx[i] = '\r';
+
+    return send_to_client(fd, tx, i+1, NOFLAGS);
+} /* end com_send_join_leave_result */
+
+
+/*
+ * TODO: if more time would send all the users so it could populate and
+ *       be persistantly displayed w/ updates
+ *
+ * server to client format: RC_JOIN | room_name | 1/0 | '\r'
+ */
+int com_send_join_result(int fd, char *room_name, uint8_t res)
+{
+    return com_send_join_leave_result(fd, room_name, res, RC_JOIN);
 } /* end com_send_join_result */
 
+/*
+ * server to cli format: RC_LEAVE | room_name | res | \r
+ */
 int com_send_leave_result(int fd, char *cli_name, uint8_t res)
 {
-
-    return SUCCESS;
+    return com_send_join_leave_result(fd, room_name, res, RC_LEAVE);
 } /* end com_send_leave_result */
 
 int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg)

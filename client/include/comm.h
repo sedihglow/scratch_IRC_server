@@ -31,4 +31,6 @@ int com_send_logout_message(char *cli_name, struct_serv_info *serv_info);
 int com_send_exit_message(char *cli_name, struct_serv_info *serv_info);
 
 int com_get_logon_result(int fd);
+
+struct_serv_message* com_parse_server_msg(char *input);
 #endif

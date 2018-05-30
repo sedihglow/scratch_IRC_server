@@ -37,8 +37,10 @@ void display_welcome(void);
 void display_clear(void);
 void display_room_welcome(char *room_name, int num_users);
 
-/* thread to recieve and update data */
+/* threaded to recieve and update data */
 void* irc_handle_server_requests(void *args);
+int irc_exec_client_response(struct_irc_info *irc_info, 
+                             struct_serv_message *serv_msg);
 
 #endif
 /****** EOF *****/

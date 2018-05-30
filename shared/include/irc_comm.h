@@ -1,15 +1,14 @@
 /*******************************************************************************
- * Filename: irc_utility.h
+ * Filename: irc_comm.h
  *
  * These are functions and definitions that can be used for both the client
- * and the server programs. These functions should not require specific
- * knowlege of client vs server utilization.
+ * and the server programs. 
  *
  * Written by: James Ross
  ******************************************************************************/
 
-#ifndef _IRC_UTILITY_H_
-#define _IRC_UTILITY_H_
+#ifndef _IRC_COMM_H_
+#define _IRC_COMM_H_
 
 #include "utility_sys.h" /* useful macros, definitions and libraries */
 
@@ -18,7 +17,7 @@
 /* Server connectivity information */
 #define _COM_SERV_ADDR   "10.0.0.169"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   50012 /* port listening on server */
+#define _COM_SERV_PORT   50007 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET           /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM       /* tcp socket */
 #define _COM_IP_PROTOCOL 0                 /* Default for type in socket() */
@@ -39,7 +38,7 @@
 /******************************************************************************
  *                      Command Code Definition
  ******************************************************************************/
-#define RC_MSG    0x0
+#define RC_MSG    0x16
 #define RC_FA     0x1
 #define RC_FL     0x2
 #define RC_BL     0x3
@@ -58,9 +57,11 @@
 #define RC_FR     0x10
 #define RC_LOGON  0x11
 #define RC_R_MSG  0x12
-#define RC_LEAVE  0x13
 #define RC_HB     0x14
+#define RC_LEAVE  0x15
 
+#define RESERVED_Z 0x0  /* was useful to reserve for error checking */
+#define RESERVE_CR 0x13 /* reserved since we use \r in messages */
 
 /* server to client reply success/failure */
 #define _REPLY_SUCCESS 1
@@ -111,6 +112,7 @@ struct_io_ring* _com_init_io_ring(void);
 void _com_free_serv_info(struct_serv_info *dest);
 void _com_free_io_ring(struct_io_ring *dest);
 void _com_free_cli_message(struct_cli_message *rem);
+void _com_free_serv_message(struct_serv_message *rem);
 /******************************************************************************* 
  * TODO: Maybe make these functions since they are long, though my current
  * protocol with them just calls a seperate stack frame and just calls the
@@ -127,7 +129,7 @@ static inline ssize_t socket_transmit(int sockfd, uint8_t *tx,
     ssize_t sent;            /* number of bytes written to socket */
     size_t  remaining = len; /* number of bytes left to write */
 
-    while (remaining > 0) {
+ //   while (remaining > 0) {
         sent = send(sockfd, tx, remaining, flags);
         if (_usrUnlikely(sent == FAILURE)) {
             err_msg("socket_transmit: send() failed");
@@ -137,7 +139,7 @@ static inline ssize_t socket_transmit(int sockfd, uint8_t *tx,
         /* in case there was something not written, try again */
         remaining -= sent;
         tx        += sent; 
-    }
+//    }
 
    return (len - remaining);
 } /* end socket_transmit */

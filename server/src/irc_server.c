@@ -31,7 +31,6 @@ void irc_fill_fd_set_read(struct_irc_info *irc_info, fd_set *readfds)
         FD_SET(list[i], readfds);
 } /* end fill_fd_set_read() */
 
-
 /*******************************************************************************
  * irc_add_to_fd_list
  *
@@ -222,9 +221,6 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
         /* set the new clients name */
         strncpy(cli->name, cli_msg->cli_name, len);
 
-        /* TODO: Get rid of this. place client in default room */
-        serv_add_to_room(irc_info->rooms, DfLT_CLI_ROOM, cli->name);
-
         /* let client know success */
         ret = com_send_logon_result(cli->sockfd, LOGON_SUCCESS);
         if (ret == FAILURE) {
@@ -267,7 +263,7 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli_info->sockfd);
 
     /* remove from client list. Had to utilize dumb string because scope */
-    ret = serv_remove_client(NULL, irc_info->cli_list, 
+    ret = serv_remove_client(cli_info->name, irc_info->cli_list, 
                                      irc_info->num_clients, cli_info->sockfd);
     if (ret != NULL) 
         irc_info->cli_list = ret;
@@ -400,7 +396,7 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  *
  *  TODO: Use errno to identify the error?
  *
- *  Reply Message format: RC_MSG | uint8_t T/F | \r
+ *  Reply Message format: RC_MSG | uint8_t T/F | room_name | \r
  *
  ******************************************************************************/
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
@@ -427,7 +423,7 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     serv_add_active_room(cli, cli_msg->msg);
 
     /* client successfully added to room, let them know. */
-    return com_send_join_result(cli->sockfd, _REPLY_SUCCESS);
+    return com_send_join_result(cli->sockfd, cli_msg->msg, _REPLY_SUCCESS);
 } /* end irc_cli_join_cmd */
 
 /* 
@@ -460,9 +456,8 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     serv_remove_active_room(cli, cli_msg->msg);
 
     /* let client know they left the room successfully and can update. */
-    return com_send_leave_result(cli->sockfd, cli->name, _REPLY_SUCCESS);
+    return com_send_leave_result(cli->sockfd, cli_msg->msg, _REPLY_SUCCESS);
 } /* irc_cli_leave_cmd */
-
 
 /* 
  * client to server format: cli_name | RC_EXIT | \r
@@ -506,7 +501,13 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 
     receive_from_client(cli_info->sockfd, rx, IO_BUFF, NO_FLAGS);
 
+    if (rx[0] == '\0') {
+        noerr_msg("client disconnecting");
+        irc_shutdown_client(irc_info, cli_info);
+    }
+
     /* Parse message */
+    /* TODO: Currently if it crashes before RC_LOGON, seg fault due to name. */
     cli_msg = com_parse_cli_message(rx);
     if (!cli_msg) {
         /* drop client and move on. likely crashed. */
@@ -520,7 +521,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     case RC_LOGON:
         /* try and accept new logon */
         if (irc_accept_new_cli(irc_info, cli_msg, cli_info) == FAILURE) {
-            /* TODO: Send message to current client telling them they suck */
             _com_free_cli_message(cli_msg);
             return FAILURE;
         }
@@ -529,7 +529,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     case RC_JOIN:
         /* join a specified room. */
         if (irc_cli_join_cmd(irc_info, cli_msg) == FAILURE) {
-            /* TODO: join failed */
             _com_free_cli_message(cli_msg);
             return FAILURE;
         }
@@ -538,7 +537,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     case RC_LEAVE:
         /* leave a specified room */
         if (irc_cli_leave_cmd(irc_info, cli_msg) == FAILURE) {
-            /* TODO: You werent in the room? WUT? */
             _com_free_cli_message(cli_msg);
             return FAILURE;
         }
@@ -547,7 +545,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     case RC_MSG:
         /* print out message to current room, listed in msg. */
         if (irc_cli_msg_cmd(irc_info, cli_msg) == FAILURE) {
-            /* TODO: issue with message, let them know */
             _com_free_cli_message(cli_msg);
             return FAILURE;
         }
@@ -573,7 +570,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
      */
 
     break;
-
 
 
 
@@ -631,32 +627,10 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     case RC_PR: // if time should be quick
     break;
 
-    case RC_LOGOUT: // implemented if/when persistent client info saved.
-    break;
-    case RC_INV:   // invite to room can still happen if time.
-    break;
 
-
-    /* TODO: Friends list is local on client untill i have persistent client
-     *       login w/ pw credentials implemented */
-    case RC_FA:
-
-    break;
-    case RC_FL:
-
-    case RC_FR:
-    break;
-
-    break;
     case RC_BL:
-
+    
     break;
-    case RC_BA:
-
-    break;
-    case RC_BR:
-    /* end TODO */
-
     case RC_ERR:
     break;
 

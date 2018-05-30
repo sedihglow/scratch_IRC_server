@@ -201,6 +201,11 @@ static int com_join_leave_send(char *cli_name, char *room_name,
     size_t room_len  = strlen(room_name) + 1;
     size_t tx_len = name_len + MSG_TYPE_SIZE + room_len + 1;
 
+    if (room_name[0] == '\0') {
+        noerr_msg("com_join_leave_send: room name was '\0'. Invalid.");
+        return FAILURE;
+    }
+
     tx = CALLOC_ARRAY(uint8_t, tx_len);
     if (!tx)
         errExit("com_send_join_request: tx could not calloc");
@@ -271,6 +276,7 @@ static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
     else
         return FAILURE;
     ++i;
+    tx[i] = '\r';
 
     send_to_server(serv_info->sockfd, tx, tx_len, NO_FLAGS);
 
@@ -282,6 +288,50 @@ int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
 {
     return com_logout_exit_send(cli_name, serv_info, RC_EXIT);
 } /* end com_send_exit_message */
+
+struct_serv_message* com_parse_server_msg(char *input)
+{
+    struct_serv_message *serv_msg;
+    char *tmp[IO_BUFF] = {'\0'};
+    int i, j, len;
+
+    if (!input) {
+        errnum_msg(EINVAL, "input was null or empty");
+        return NULL;
+    }
+
+    if (input[0] == RESERVED_Z) {
+        err_msg("com_parse_server_msg: type sent is reserved, ignoring.");
+        return NULL;
+    }
+
+    serv_msg = CALLOC(struct_serv_message);
+    if (!serv_msg)
+        errExit("com_parse_server_msg: serv_msg failed to calloc");
+
+    i = 0;
+    serv_msg->type = input[i];
+    ++i;
+    if (input[i] == '\r')
+        return serv_msg;
+
+    len = strlen(input+i) + 1;
+    serv->msg = CALLOC_ARRAY(char, len);
+    if (!serv->msg)
+        errExit("com_parse_server_msg: serv_msg msg calloc failure.");
+
+    for(j=0; input[i] != '\r'; ++i, ++j)
+        tmp[j] = input[i];
+
+    len = strlen(tmp) + 1;
+    serv_msg->msg = CALLOC_ARRAY(char, len);
+    if (!serv_msg->msg)
+        errExit("com_parse_server_msg: serv payload failed calloc");
+
+    strncpy(serv_msg->msg, tmp, len);
+
+    return serv_msg;
+} /* end com_parse_server_msg */
 
 /* 
  *  com_send_logout_message

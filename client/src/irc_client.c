@@ -80,8 +80,10 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
     char *cli_name = irc_info->client->name;
     
     if (input[0] != '/') {
-        return com_send_chat_message(cli_name, input,
-                                     irc_info->serv_info);
+        if (strcmp(irc_info->client->rooms[0]->room_name, R_DFLT_ROOM) != 0)
+            return SUCCESS; /* ignore the message, in the void */
+
+        return com_send_chat_message(cli_name, input, irc_info->serv_info);
     }
 
     /* /f [a, r, l] */
@@ -101,11 +103,16 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
     len = sizeof(JOIN); /* includes '\0' */
     ret = strncmp(input, JOIN, len-1);
     if (ret == 0) {
-        if (input[len-1] == ' ') {
-            ret = com_send_join_message(cli_name, input+len, irc_info->serv_info);
-            return ret;
+        if (input[len-1] == ' ') { /* if true, check next index for '\0' */
+            if (input[len] != '\0') {
+                ret = com_send_join_message(cli_name, input+len, 
+                                            irc_info->serv_info);
+                return ret;
+            } else {
+                return FAILURE; /* invalid command */
+            }
         } else {
-            return FAILURE; /* invalid command */
+            return FAILURE;
         }
     }
 
@@ -161,35 +168,14 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
     //    RC_VOID;
     }
 
+    if (strcmp(irc_info->client->rooms[0]->room_name, R_DFLT_ROOM) != 0)
+        return SUCCESS; /* ignore the message, in the void */
+
     return com_send_chat_message(irc_info->client->name, input,
                                  irc_info->serv_info);
 } /* end irc_handle_user_input */
 
 
-
-/* TODO: DONT FORGET TO LEAVE THE VOID IF INSIDE ON JOIN RESPONSE */
-void* irc_handle_server_requests(void *args)
-{
-    struct_irc_info *irc_info = (struct_irc_info*) args;
-    uint8_t rx[_COM_IO_BUFF] = {'\0'};
-    int current_cmd;
-
-
-    for ( ;; ) {
-        /* block waiting for message from server. */
-        receive_from_server(irc_info->serv_info->sockfd, rx, _COM_IO_BUFF, 
-                            NO_FLAGS);
-
-        if (rx[0] == 0x0) { 
-            /* server crashed or i have a bug */
-            g_serv_crashed = true;
-            pthread_exit(NULL);
-        }
-
-    }
-
-    pthread_exit(NULL);
-} /* end handle_server_requests() */
 
 /******************************************************************************
  * Allocate all members and sub-members of struct to_init.
@@ -338,6 +324,74 @@ void display_room_welcome(char *room_name, int num_users)
             room_name, num_users);
 } /* end display_room_welcome */
 
+
+int irc_exec_client_response(struct_irc_info *irc_info, 
+                             struct_serv_message *serv_msg)
+{
+    struct_cli_info *cli = irc_info->client;
+
+    switch (serv_msg->type) {
+
+    case RC_MSG:
+         
+    break;
+    case RC_JOIN: /* format: type | 0/1 | \r */
+    if (strcmp(cli->rooms->room_name, R_DFLT_ROOM) == 0) {
+        /* leave the void */
+        room_free_info(cli->rooms[0]);
+        cli->rooms[0] = NULL;
+    }
+    
+    if ((uint8_t)(serv_msg->msg[0]) == 0)
+        return FAILURE;
+
+    break;
+
+    case RC_LEAVE:
+
+    break;
+
+    case RC_EXIT:
+
+    break;
+
+    default:
+        err_msg("Invalid command type recieved");
+        return FAILURE;
+    } 
+
+    return SUCCESS;
+} /* end irc_exec_client_response */
+
+
+void* irc_handle_server_requests(void *args)
+{
+    struct_irc_info *irc_info = (struct_irc_info*) args;
+    uint8_t rx[_COM_IO_BUFF] = {'\0'};
+    struct_serv_message *serv_msg;
+
+    for ( ;; ) {
+        /* block waiting for message from server. */
+        receive_from_server(irc_info->serv_info->sockfd, rx, _COM_IO_BUFF, 
+                            NO_FLAGS);
+        if (rx[0] == 0x0 || rx[0] == RC_EXIT) { 
+            printf("Server has crashed. Exiting program.\n");
+            /* server crashed or i have a bug */
+            g_serv_crashed = true;
+            pthread_exit(NULL);
+        }
+
+        serv_msg = com_parse_server_msg(rx);
+        if (!serv_msg)
+            errExit("irc_handle_server_request: serv_msg parse failure.");
+       
+        irc_exec_client_response(irc_info, serv_msg);
+         
+    }
+
+    pthread_exit(NULL);
+} /* end handle_server_requests() */
+
 /* Main execution function. Leaves this leaves the program. */
 void irc_client(void)
 {
@@ -369,11 +423,18 @@ void irc_client(void)
 
     for ( ;; ) { 
         input = irc_get_user_input();
+
+        if (g_serv_crashed == true) {
+            pthread_join(t_id, NULL); /* wait for server response and thread close */
+            free(input);
+            break;
+        }
+
         ret = irc_handle_user_input(irc_info, input);
 
         if (ret == FAILURE) {
             printf("- INVALID COMMAND -");
-        } else if (ret == RC_LOGOUT) {
+        } else if (ret == RC_EXIT || g_serv_crashed == true) {
             pthread_join(t_id, NULL); /* wait for server response and thread close */
             free(input);
             break;
@@ -383,7 +444,6 @@ void irc_client(void)
 
     irc_free_info(irc_info);
 } /* end irc_client() */
-
 /****** EOF ******/
 
 #if 0

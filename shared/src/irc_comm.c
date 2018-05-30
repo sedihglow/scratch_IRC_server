@@ -72,5 +72,12 @@ void _com_free_io_ring(struct_io_ring *dest)
 void _com_free_cli_message(struct_cli_message *rem)
 {
     FREE_ALL(rem->cli_name, rem->msg, rem);
-}
+} /* end _com_free_cli_message */
+
+void _com_free_serv_message(struct_serv_message *rem)
+{
+    FREE_ALL(rem->msg, rem);
+} /* end _com_free_serv_message */
+
+
 /*** EOF ***/

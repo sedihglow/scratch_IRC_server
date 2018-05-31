@@ -337,7 +337,8 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     }
     for (i=0; i < len; ++i)
         room_name[i] = cli_msg->msg[i];
-
+    
+    /* locate the room */
     working_room = room_find(&irc_info->rooms->rooms, room_name);
     if (!working_room) { /* room does not exist */
         noerr_msg("irc_cli_msg_cmd: Room does not exist");
@@ -373,7 +374,8 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
                                     "in client list");
                 return FAILURE;
             }
-            com_send_room_message(cli->sockfd, room_name, cli->name, input);
+            com_send_room_message(cli->sockfd, room_name, cli_msg->cli_name, 
+                                  input);
         }
     }
     

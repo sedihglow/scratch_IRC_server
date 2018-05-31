@@ -263,11 +263,8 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli_info->sockfd);
 
     /* remove from client list. Had to utilize dumb string because scope */
-    ret = serv_remove_client(cli_info->name, irc_info->cli_list, 
+    irc_info->cli_list = serv_remove_client(cli_info->name, irc_info->cli_list, 
                                      irc_info->num_clients, cli_info->sockfd);
-    if (ret != NULL) 
-        irc_info->cli_list = ret;
-
     --(irc_info->num_clients);
 
     serv_free_client(irc_info->rooms, cli_info);
@@ -326,7 +323,7 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
  */
 int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    int i, ret, len;
+    int i, j, ret, len;
     char room_name[ROOM_NAME_MAX] = {'\0'};
     char input[MSG_STR_LEN_MAX]   = {'\0'};
     struct_room_info *working_room;
@@ -353,8 +350,9 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
         return FAILURE;
 
     /* get message for the room */
-    for (; cli_msg->msg[i] != '\r'; ++i)
-        input[i] = cli_msg->msg[i];
+    for (j=0; cli_msg->msg[i] != '\0'; ++i, ++j)
+        input[j] = cli_msg->msg[i];
+    input[j] = '\0';
 
     /* add new message to room history */
     ret = room_add_history(&irc_info->rooms->rooms, room_name, input);

@@ -115,7 +115,7 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
     /* get name */ /* TODO: check name length in case client didnt. */
     for (i=0; rx[i] != '\0'; ++i)
         tmp[i] = rx[i];
-        ++i; /* increment passed the '\0', handled in CALLOC below */
+    ++i; /* increment passed the '\0', handled in CALLOC below */
 
     /* store name */
     len = strlen(tmp)+1;

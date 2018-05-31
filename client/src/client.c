@@ -49,16 +49,15 @@ void cli_free_info(struct_client_info *dest)
         if (dest->rooms[i])
             room_free_info(dest->rooms[i]);
     }
-
+    if (dest->f_list) {
     /* free flist->list indecies */
-    for (i=0; i < F_MAX; ++i) {
-        if (dest->f_list->list[i])
-            free(dest->f_list->list[i]);
-        else
-            break;
+        for (i=0; i < F_MAX; ++i) {
+            if (dest->f_list->list[i])
+                free(dest->f_list->list[i]);
+        }
     }
 
-    FREE_ALL(dest->name, dest->f_list->list, dest->f_list, dest);
+    FREE_ALL(dest->name, dest->f_list, dest);
 } /* end cli_free_info */
 
 
@@ -75,7 +74,7 @@ int cli_add_to_room_history(struct_client_info *cli, char *room_name,  char *msg
                 return FAILURE;
 
             if (disp == true)
-                printf("%s", msg);
+                printf("%s\n", msg);
             return SUCCESS; 
         }
     }
@@ -106,10 +105,6 @@ void cli_goto_default_room(struct_client_info *cli_info)
     cli_info->room_count = 1;
     cli_info->current_r = 0;
 } /* end cli_goto_default_room */
-
-
-
-
 
 int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
 {
@@ -146,9 +141,7 @@ int cli_add_active_room(struct_client_info *cli, char *room_name)
     for (i=0; i < _R_ROOM_MAX; ++i) {
         if (cli->rooms[i] == NULL) {
 
-            cli->rooms[i] = CALLOC(struct_room_info);
-            if (!cli->rooms[i])
-                errExit("serv_add_active_room: room failed to CALLOC.");
+            cli->rooms[i] = room_init_info();
 
             cli->rooms[i]->room_name = CALLOC_ARRAY(char, strlen(room_name)+1);
             if (!cli->rooms[i]->room_name)

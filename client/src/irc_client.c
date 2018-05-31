@@ -227,7 +227,6 @@ char* irc_get_user_input(void)
     /* check for newline */
     len = strlen(buff);
     if (buff[len-1] == '\n') {
-        printf (" newline found\n");
         buff[len-1] = '\0';
     } else {
         RD_CLR_STDIN();
@@ -325,7 +324,7 @@ void display_room_welcome(char *room_name, int num_users)
         return;
     }
 
-    printf("\nWelcome to the room  %s, currently with %d active users.\n\n",
+    printf("\nWelcome to the room %s, currently with %d active users.\n\n",
             room_name, num_users);
 } /* end display_room_welcome */
 
@@ -362,6 +361,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
     snprintf(tmp, IO_BUFF, "%s: %s", (serv_msg->msg)+room_len,
                                      (serv_msg->msg)+msg_start);
 
+#if 0
     /* place client name in tmp. */
     i = 0;
     strncpy(tmp, (serv_msg->msg)+room_len, cli_len);
@@ -382,6 +382,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         tmp[i] = serv_msg->msg[j];
     }
     tmp[i] = '\n';
+#endif
 
     /* if the current room is the room the message is for, set to print */
     if (strcmp(serv_msg->msg, cli->rooms[cli->current_r]->room_name) == 0)
@@ -391,7 +392,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         noerr_msg("You were not in the room you are sending a message to?");
         return FAILURE;
     }
-    printf("RC_MSG RECIEVED AND EXECUTED\n");
 
     /* if the current room index is the same as the room the message is for
      * then print it to the screen. else return with the saved history.
@@ -419,8 +419,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
             noerr_msg("irc_exec_client_response: server send success on fail case");
             return FAILURE;
         }
-
-        printf("RC_JOIN RECIEVED AND EXECUTED\n");
 
         /* you have joined a new room prompt. refresh chat with new room. */
         display_room_welcome(serv_msg->msg, (int)serv_msg->msg[len+1]);
@@ -473,7 +471,6 @@ void* irc_handle_server_requests(void *args)
             printf("Server has crashed. Exiting program.\n");
             /* server crashed or i have a bug */
             g_serv_crashed = true;
-            _com_free_serv_message(serv_msg);
             pthread_exit(NULL);
         }
 
@@ -483,6 +480,7 @@ void* irc_handle_server_requests(void *args)
        
         irc_exec_client_response(irc_info, serv_msg);
         _com_free_serv_message(serv_msg);
+        serv_msg = NULL;
         memset(rx, '\0', _COM_IO_BUFF);
     }
 
@@ -498,6 +496,8 @@ void irc_client(void)
     int current_cmd;
     char *input;  /* input is likely to be handled in a thread. */
     bool debug_on = false; /* definition is debug.h, should be an argv. */
+
+    void *t_ret;
     
     /* thread information */
     pthread_t t_id;
@@ -520,11 +520,11 @@ void irc_client(void)
         errnumExit(ret, "irc_client: Failed to create recv thread.");
 
     for ( ;; ) { 
+        printf(">> ");
+        fflush(stdout);
         input = irc_get_user_input();
 
         if (g_serv_crashed == true) {
-            pthread_join(t_id, NULL); /* wait for server response and thread close */
-            free(input);
             break;
         }
 
@@ -533,13 +533,14 @@ void irc_client(void)
         if (ret == FAILURE) {
             printf("- INVALID COMMAND -\n");
         } else if (ret == RC_EXIT || g_serv_crashed == true) {
-            pthread_join(t_id, NULL); /* wait for server response and thread close */
-            free(input);
             break;
         }
         free(input);
     }
     
+    /* wait for server response and thread close */
+    pthread_join(t_id, NULL); 
+    free(input);
     /* shutdown open socket */
     shutdown(irc_info->serv_info->sockfd, SHUT_RDWR);
     irc_free_info(irc_info);

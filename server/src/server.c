@@ -115,14 +115,9 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
     struct_cli_info *remove = NULL;
 
     /* check if there is anything to remove */
-    if (!old_list) {
+    if (!old_list)
         return NULL; 
-    }
-    else if (old_size < 2) {
-        FREE_ALL(old_list[0], old_list);
-        *old_list = NULL;
-        return NULL;
-    }
+
     
     new_list = CALLOC_ARRAY(struct_cli_info*, old_size-1);
     
@@ -135,6 +130,11 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
         errno = EINVAL;
         noerr_msg("serv_remove_client: client %s not found in client list.");
         return NULL; 
+    }
+
+    if (old_size < 2) {
+        old_list[0] = NULL;
+        return NULL;
     }
 
     /* create new list */

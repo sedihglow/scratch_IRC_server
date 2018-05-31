@@ -115,7 +115,7 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
     /* get name */ /* TODO: check name length in case client didnt. */
     for (i=0; rx[i] != '\0'; ++i)
         tmp[i] = rx[i];
-    ++i; /* increment passed the '\0', handled in CALLOC below */
+        ++i; /* increment passed the '\0', handled in CALLOC below */
 
     /* store name */
     len = strlen(tmp)+1;
@@ -134,15 +134,17 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
         return new_msg;
 
     /* parse msg if applicable, copies '\0' */
-    memset(tmp, '\0', MSG_TYPE_SIZE); 
+    len = strlen(tmp)+1;
+    memset(tmp, '\0', len); 
     for (j=0; rx[i] != '\r'; ++j, ++i)
         tmp[j] = rx[i];
     
     /* store message if aplicable */
-    len = strlen(tmp) + 1;
+    len = j+1; /* length of final payload */
     new_msg->msg = CALLOC_ARRAY(char, len);
-    strncpy(new_msg->msg, tmp, len); 
-   
+    for (j=0; j < len; ++j)
+        new_msg->msg[j] = tmp[j];
+
     return new_msg;
 } /* end parse_cli_message() */
 
@@ -161,11 +163,11 @@ int com_send_logon_result(int fd, uint8_t payload)
 } /* end com_send_logon_result */
 
 
-static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
-                                      uint8_t type);
+static int com_send_join_leave_result(int fd, char *room_name, uint8_t num_users,
+                                      uint8_t res, uint8_t type);
 
-static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
-                                      uint8_t type)
+static int com_send_join_leave_result(int fd, char *room_name, uint8_t num_users, 
+                                      uint8_t res, uint8_t type)
 {
     int len, i, j;
     uint8_t tx[IO_BUFF] = {'\0'};
@@ -176,12 +178,17 @@ static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
     }
 
     i = 0;
-    if (type == RC_JOIN)
+    if (type == RC_JOIN) {
         tx[i] = RC_JOIN;
-    else if (type == RC_LEAVE)
+        ++i;
+        tx[i] = num_users;
+    }
+    else if (type == RC_LEAVE) {
         tx[i] = RC_LEAVE;
-    else
-        return FAILURE;
+    }
+    else {
+        return FAILURE; /* just catches programming errors. */
+    }
     ++i;
     
     len = strlen(room_name) + 1;
@@ -200,11 +207,11 @@ static int com_send_join_leave_result(int fd, char *room_name, uint8_t res,
  * TODO: if more time would send all the users so it could populate and
  *       be persistantly displayed w/ updates
  *
- * server to client format: RC_JOIN | room_name | 1/0 | '\r'
+ * server to client format: RC_JOIN | num_users | room_name  | 1/0 | '\r'
  */
-int com_send_join_result(int fd, char *room_name, uint8_t res)
+int com_send_join_result(int fd, char *room_name, uint8_t num_users, uint8_t res)
 {
-    return com_send_join_leave_result(fd, room_name, res, RC_JOIN);
+    return com_send_join_leave_result(fd, room_name, num_users, res, RC_JOIN);
 } /* end com_send_join_result */
 
 /*
@@ -212,7 +219,7 @@ int com_send_join_result(int fd, char *room_name, uint8_t res)
  */
 int com_send_leave_result(int fd, char *room_name, uint8_t res)
 {
-    return com_send_join_leave_result(fd, room_name, res, RC_LEAVE);
+    return com_send_join_leave_result(fd, room_name, 0, res, RC_LEAVE);
 } /* end com_send_leave_result */
 
 /*

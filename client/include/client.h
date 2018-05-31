@@ -40,7 +40,7 @@
   *             - change what room is being displayed, let server know
   *             - If it is the last room the user is in, go to VOID
   */
-#define LEAVE    "/leave"        // /leave <channel> : leave a channel
+#define LEAVE    "/leave"         // /leave <channel> : leave a channel
 #define LOG_OUT  "/logout "       //                  : Back to login screen.
 #define INVITE   "/invite "       // /invite <name>   : Invite to current room 
 #define INV      "/inv "          // /inv <name>      : Same as above
@@ -59,6 +59,9 @@
 #define F_MAX     30    // 30 friends max. Too popular too bad. 
 
 #define CLI_NAME_MAX _NAME_SIZE_MAX 
+
+#define CLI_EXTRA_CHAR_BUFF 10
+#define CLI_R_HIST_LEN (_H_STR_LEN_MAX + CLI_NAME_MAX + CLI_EXTRA_CHAR_BUFF)
 
 typedef struct friend_list {
     char *list[F_MAX];
@@ -82,7 +85,13 @@ int cli_set_new_cli_info(struct_client_info *cli_info, char *name);
 /* Handles friend list functionality, helper functions are static  */
 int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname);
 
+int cli_add_active_room(struct_client_info *cli, char *room_name);
+int cli_remove_active_room(struct_client_info *cli, char *room_name);
 
+int cli_add_to_room_history(struct_client_info *cli, char *room_name,  
+                            char *msg, bool disp);
+
+void cli_goto_default_room(struct_client_info *cli_info);
 /* TODO: Might not have time to implement 
  * int cli_block_enemy(struct_client_info *client, char *name);
  * int cli_inv_friend_to_room(struct_client_info *client, char *name);

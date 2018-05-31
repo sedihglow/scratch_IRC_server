@@ -160,23 +160,29 @@ int com_get_logon_result(int fd)
     return SUCCESS;
 } /* end com_get_logon_message */
 
-int com_send_chat_message(char *name, char *msg, struct_serv_info *serv_info)
+int com_send_chat_message(char *cli_name, char *room_name, char *msg, 
+                          struct_serv_info *serv_info)
 {
     uint8_t *tx;
     int i;
-    size_t name_len = strlen(name) + 1;
+    size_t name_len = strlen(cli_name) + 1;
     size_t msg_len  = strlen(msg)  + 1;
-    size_t tx_len = MSG_TYPE_SIZE + name_len + msg_len + 1;
+    size_t room_len = strlen(room_name) + 1;
+    size_t tx_len = MSG_TYPE_SIZE + name_len + room_len + msg_len + 1;
 
     tx = CALLOC_ARRAY(uint8_t, tx_len);
     if (!tx)
         errExit("Failed to allocate TX, download more ram.");
    
     i = 0;
-    strncpy((char*)(tx+i), name, name_len);
+    strncpy((char*)(tx+i), cli_name, name_len);
     i += name_len;
     tx[i] = RC_MSG;
     ++i;
+    
+    strncpy((char*)(tx+i), room_name, room_len);
+    i += room_len;
+
     strncpy((char*)(tx+i), msg, msg_len);
     i += msg_len;
     tx[i] = '\r';
@@ -289,7 +295,7 @@ int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
     return com_logout_exit_send(cli_name, serv_info, RC_EXIT);
 } /* end com_send_exit_message */
 
-struct_serv_message* com_parse_server_msg(char *input)
+struct_serv_message* com_parse_server_msg(uint8_t *input)
 {
     struct_serv_message *serv_msg;
     char tmp[IO_BUFF] = {'\0'};
@@ -314,21 +320,18 @@ struct_serv_message* com_parse_server_msg(char *input)
     ++i;
     if (input[i] == '\r')
         return serv_msg;
-
-    len = strlen(input+i) + 1;
-    serv_msg->msg = CALLOC_ARRAY(char, len);
-    if (!serv_msg->msg)
-        errExit("com_parse_server_msg: serv_msg msg calloc failure.");
-
+    
+    /* copy payload into tmp */
     for(j=0; input[i] != '\r'; ++i, ++j)
         tmp[j] = input[i];
-
-    len = strlen(tmp) + 1;
+    
+    len = j + 1;
     serv_msg->msg = CALLOC_ARRAY(char, len);
     if (!serv_msg->msg)
         errExit("com_parse_server_msg: serv payload failed calloc");
-
-    strncpy(serv_msg->msg, tmp, len);
+    
+    for (i=0; i < len; ++i)
+        serv_msg->msg[i] = tmp[i];
 
     return serv_msg;
 } /* end com_parse_server_msg */

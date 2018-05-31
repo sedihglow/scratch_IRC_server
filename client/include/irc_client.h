@@ -11,6 +11,8 @@
 #include "comm.h" // holds struct_serv_info
 #include "debug.h"
 
+#define DISP_INSERT_NEWLINE 20
+
 
 typedef struct irc_info {
     struct_client_info *client;
@@ -29,13 +31,14 @@ void irc_logon_client(struct_irc_info *irc_info);
 
 /* client input */
 char* irc_get_user_input(void);
-int irc_handler_user_input(struct_irc_info *irc_info, char *input);
+int irc_handle_user_input(struct_irc_info *irc_info, char *input);
 
 
 /* Display Functions */
 void display_welcome(void);
 void display_clear(void);
 void display_room_welcome(char *room_name, int num_users);
+void display_new_room(char *room_name, int num_users);
 
 /* threaded to recieve and update data */
 void* irc_handle_server_requests(void *args);

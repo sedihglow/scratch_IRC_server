@@ -78,12 +78,15 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
     int ret, type, len;
     char *cli_name = irc_info->client->name;
+    char *room_name;
+    room_name = irc_info->client->rooms[irc_info->client->current_r]->room_name;
     
     if (input[0] != '/') {
-        if (strcmp(irc_info->client->rooms[0]->room_name, R_DFLT_ROOM) != 0)
+        if (strcmp(irc_info->client->rooms[0]->room_name, R_DFLT_ROOM) == 0)
             return SUCCESS; /* ignore the message, in the void */
 
-        return com_send_chat_message(cli_name, input, irc_info->serv_info);
+        return com_send_chat_message(cli_name, room_name, input, 
+                                     irc_info->serv_info);
     }
 
     /* /f [a, r, l] */
@@ -124,9 +127,8 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
             ret = com_send_leave_message(cli_name, input+len, 
                                          irc_info->serv_info);
         } else if (input[len-1] == '\0') { /* leave current room */
-            ret = com_send_leave_message(cli_name,
-                  irc_info->client->rooms[irc_info->client->current_r]->room_name,
-                  irc_info->serv_info);
+            ret = com_send_leave_message(cli_name, room_name,
+                                         irc_info->serv_info);
         } else {
             return FAILURE; /* invalid command */
         }
@@ -171,7 +173,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
     if (strcmp(irc_info->client->rooms[0]->room_name, R_DFLT_ROOM) != 0)
         return SUCCESS; /* ignore the message, in the void */
 
-    return com_send_chat_message(irc_info->client->name, input,
+    return com_send_chat_message(cli_name, room_name, input,
                                  irc_info->serv_info);
 } /* end irc_handle_user_input */
 
@@ -315,8 +317,11 @@ void display_room_welcome(char *room_name, int num_users)
 
     ret = strcmp(room_name, R_DFLT_ROOM);
     if (ret == 0) {
-        printf("\nYou have entered the %s, You are in silence.\n"
-               "Number of users in the room: 0\n\n", room_name);
+        printf("\nYou have entered the %s\n"
+               "Number of users in the room: %d\n\n", room_name, num_users);
+
+        if (strcmp(room_name, R_DFLT_ROOM) == 0)
+            printf("You are in silence.\n");
         return;
     }
 
@@ -329,30 +334,120 @@ int irc_exec_client_response(struct_irc_info *irc_info,
                              struct_serv_message *serv_msg)
 {
     struct_client_info *cli = irc_info->client;
+    size_t room_len;
+    size_t cli_len;
+    int i, msg_start, j;
+    char tmp[IO_BUFF] = {'\0'};
+    bool disp = false;
+    size_t len;
+
+
+    if (!serv_msg->msg || serv_msg->msg[0] == '\0')
+        return FAILURE;
 
     switch (serv_msg->type) {
 
-    case RC_MSG:
+    case RC_MSG: /* format: RC_MSG | room_name | client name | msg | \r */
+
+    /*
+     * TODO: Place in function for adding client message to client hist 
+     *       so it can be used when sending message to arbitrary room.
+     */
+
+    room_len = strlen(serv_msg->msg) + 1; /* length of room_name */
+    cli_len = strlen((serv_msg->msg) + room_len) + 1;
+    msg_start = room_len + cli_len;
+
+    /* place client name in front and message after */
+    snprintf(tmp, IO_BUFF, "%s: %s", (serv_msg->msg)+room_len,
+                                     (serv_msg->msg)+msg_start);
+
+    /* place client name in tmp. */
+    i = 0;
+    strncpy(tmp, (serv_msg->msg)+room_len, cli_len);
+    i += cli_len;
+
+    tmp[i] = ':';
+    ++i;
+    tmp[i] = ' ';
+    ++i;
+
+    /* put the message client typed into temp formated */
+    for (j = msg_start; serv_msg->msg[j] != '\r'; ++i, ++j) {
+        if (j == DISP_INSERT_NEWLINE) { 
+            /* make the prints have width limit */
+            tmp[i] = '\n';
+            ++i;
+        }
+        tmp[i] = serv_msg->msg[j];
+    }
+    tmp[i] = '\n';
+
+    /* if the current room is the room the message is for, set to print */
+    if (strcmp(serv_msg->msg, cli->rooms[cli->current_r]->room_name) == 0)
+        disp = true;
+
+    if (cli_add_to_room_history(cli, serv_msg->msg, tmp, disp) == FAILURE) {
+        noerr_msg("You were not in the room you are sending a message to?");
+        return FAILURE;
+    }
+    printf("RC_MSG RECIEVED AND EXECUTED\n");
+
+    /* if the current room index is the same as the room the message is for
+     * then print it to the screen. else return with the saved history.
+     *
+     * TODO: When switching rooms, function to refresh chat w/ history.
+     */
          
     break;
-    case RC_JOIN: /* format: type | 0/1 | \r */
-    if (strcmp(cli->rooms[0]->room_name, R_DFLT_ROOM) == 0) {
-        /* leave the void */
-        room_free_info(cli->rooms[0]);
-        cli->rooms[0] = NULL;
-    }
-    
-    if ((uint8_t)(serv_msg->msg[0]) == 0)
-        return FAILURE;
+    case RC_JOIN: /* format: type | num_users | room_name | 0/1 | | \r */
+
+        /* check res to see if server failed to join you */
+        len = strlen((serv_msg->msg) + 1) + 1;
+        if (serv_msg->msg[len+1] == 0x0) { 
+            printf("notice: You are currently in the maximum allowed rooms.\n"
+                   "        Please leave a room and try again.\n");
+            return FAILURE;
+        }
+
+        /* if in the void, leave it */
+        if (strcmp(cli->rooms[0]->room_name, R_DFLT_ROOM) == 0)
+            cli_remove_active_room(cli, R_DFLT_ROOM);
+
+        /* add the new room to the active room list setting as current room */
+        if (cli_add_active_room(cli, (serv_msg->msg)+1) == FAILURE) {
+            noerr_msg("irc_exec_client_response: server send success on fail case");
+            return FAILURE;
+        }
+
+        printf("RC_JOIN RECIEVED AND EXECUTED\n");
+
+        /* you have joined a new room prompt. refresh chat with new room. */
+        display_room_welcome(serv_msg->msg, (int)serv_msg->msg[len+1]);
 
     break;
 
-    case RC_LEAVE:
+    case RC_LEAVE: /* format: type | room_name | 0/1 | \r */
+        /* check result to see if server failed or successed */
+        len = strlen(serv_msg->msg) + 1;
+        if (serv_msg->msg[len] == 0x0)
+            return FAILURE;
 
+        if (cli_remove_active_room(cli, serv_msg->msg) == FAILURE) {
+            printf("notice: You were not in that room.\n");
+            return FAILURE;
+        }
+        
+        if (cli->current_r == 0 && cli->rooms[0] == NULL) {
+            /* place in void, all rooms empty */
+            cli_goto_default_room(cli);
+        }
+
+        printf("RC_LEAVE RECIEVED AND EXECUTED\n");
     break;
 
     case RC_EXIT:
-
+        /* handled on recv from client at irc_handle_server_requests */
     break;
 
     default:
@@ -378,17 +473,20 @@ void* irc_handle_server_requests(void *args)
             printf("Server has crashed. Exiting program.\n");
             /* server crashed or i have a bug */
             g_serv_crashed = true;
+            _com_free_serv_message(serv_msg);
             pthread_exit(NULL);
         }
 
-        serv_msg = com_parse_server_msg((char*)rx);
+        serv_msg = com_parse_server_msg(rx);
         if (!serv_msg)
             errExit("irc_handle_server_request: serv_msg parse failure.");
        
         irc_exec_client_response(irc_info, serv_msg);
-         
+        _com_free_serv_message(serv_msg);
+        memset(rx, '\0', _COM_IO_BUFF);
     }
 
+    _com_free_serv_message(serv_msg);
     pthread_exit(NULL);
 } /* end handle_server_requests() */
 
@@ -398,7 +496,7 @@ void irc_client(void)
     struct_irc_info *irc_info; 
     int ret;
     int current_cmd;
-    char *input; /* input is likely to be handled in a thread. */
+    char *input;  /* input is likely to be handled in a thread. */
     bool debug_on = false; /* definition is debug.h, should be an argv. */
     
     /* thread information */
@@ -433,7 +531,7 @@ void irc_client(void)
         ret = irc_handle_user_input(irc_info, input);
 
         if (ret == FAILURE) {
-            printf("- INVALID COMMAND -");
+            printf("- INVALID COMMAND -\n");
         } else if (ret == RC_EXIT || g_serv_crashed == true) {
             pthread_join(t_id, NULL); /* wait for server response and thread close */
             free(input);
@@ -441,7 +539,9 @@ void irc_client(void)
         }
         free(input);
     }
-
+    
+    /* shutdown open socket */
+    shutdown(irc_info->serv_info->sockfd, SHUT_RDWR);
     irc_free_info(irc_info);
 } /* end irc_client() */
 /****** EOF ******/

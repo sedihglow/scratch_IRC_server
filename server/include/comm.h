@@ -32,7 +32,7 @@ ssize_t receive_from_client(int sockfd, uint8_t *rx, size_t len, int flags);
 struct_cli_message* com_parse_cli_message(uint8_t *rx);
 
 int com_send_logon_result(int fd, uint8_t payload);
-int com_send_join_result(int fd, char *room_name, uint8_t res);
+int com_send_join_result(int fd, char *room_name, uint8_t num_users, uint8_t res);
 
 int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg);
 int com_send_leave_result(int fd, char *room_name, uint8_t res);

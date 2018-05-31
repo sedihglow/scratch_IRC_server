@@ -212,10 +212,12 @@ void serv_remove_active_room(struct_cli_info *cli, char *room_name)
     int i;
 
     for (i=0; i < _R_ROOM_MAX; ++i) {
-        if (strcmp(cli->active_rooms[i], room_name) == 0) {
-            free(cli->active_rooms[i]);
-            cli->active_rooms[i] = NULL;
-            return;
+        if (cli->active_rooms[i]) {
+            if (strcmp(cli->active_rooms[i], room_name) == 0) {
+                free(cli->active_rooms[i]);
+                cli->active_rooms[i] = NULL;
+                return;
+            }
         }
     }
 } /* end serv_remove_active_room */

@@ -352,9 +352,8 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     if (ret == FAILURE) /* client was not in the room. */
         return FAILURE;
 
-
     /* get message for the room */
-    for (; i < MSG_STR_LEN_MAX && cli_msg->msg[i] != '\r'; ++i)
+    for (; cli_msg->msg[i] != '\r'; ++i)
         input[i] = cli_msg->msg[i];
 
     /* add new message to room history */
@@ -376,7 +375,7 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
                                     "in client list");
                 return FAILURE;
             }
-            com_send_room_message(cli->sockfd, cli->name, room_name, input);
+            com_send_room_message(cli->sockfd, room_name, cli->name, input);
         }
     }
     
@@ -396,12 +395,13 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  *
  *  TODO: Use errno to identify the error?
  *
- *  Reply Message format: RC_MSG | uint8_t T/F | room_name | \r
+ * server to client format: RC_JOIN | room_name | 1/0 | num_users | '\r'
  *
  ******************************************************************************/
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    int ret;
+    int ret, i;
+    uint8_t num_users;
     struct_cli_info *cli;
 
     /* get clients information */
@@ -412,18 +412,30 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
         return FAILURE;
     }
 
+    i = strlen(cli_msg->msg) + 2; /* index of num_users */
+    num_users = cli_msg->msg[i];
+
+    /* add new room to active room list for client */
+    if (serv_add_active_room(cli, cli_msg->msg) == FAILURE) {
+        /* user is in max ammount of rooms. */
+        com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
+                             _REPLY_FAILURE);
+        return SUCCESS;
+    }
+
     /* add client to the room if there is space */
-    ret = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli->name);
-    if (ret == FAILURE) {
-        com_send_join_result(cli->sockfd, cli_msg->msg, _REPLY_FAILURE);
+    num_users = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli->name);
+    if (num_users == FAILURE) {
+        serv_remove_active_room(cli, cli_msg->msg);
+        com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
+                             _REPLY_FAILURE);
         return FAILURE;
     }
 
-    /* add new room to active room list for client */
-    serv_add_active_room(cli, cli_msg->msg);
 
     /* client successfully added to room, let them know. */
-    return com_send_join_result(cli->sockfd, cli_msg->msg, _REPLY_SUCCESS);
+    return com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
+                                _REPLY_SUCCESS);
 } /* end irc_cli_join_cmd */
 
 /* 

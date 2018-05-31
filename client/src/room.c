@@ -61,4 +61,29 @@ int room_switch(struct_room_state *room_state, struct_room_info *new_room)
 {
     return 0;
 } /* end room_switch */
+
+int room_add_to_history(struct_room_info *room, char *msg) 
+{
+    size_t len;
+
+    /* add new message to end of the list */
+    len = strlen(msg) + 1; 
+    if (room->history[room->hist_end] != NULL) {
+        free(room->history[room->hist_end]);
+        room->history[room->hist_end] = NULL;
+
+        room->hist_start = (room->hist_start + 1) % _H_STR_MAX;
+    }
+    
+    /* allocate to appropriate size */
+    room->history[room->hist_end] = CALLOC_ARRAY(char, len);
+
+    strncpy(room->history[room->hist_end], msg, len);
+
+    /* increment pointer ring */
+    room->hist_end = (room->hist_end + 1) % _H_STR_MAX;
+    
+    return SUCCESS;
+} /* end room_add_to_history */
+
 /**** EOF ****/

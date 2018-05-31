@@ -62,6 +62,55 @@ void cli_free_info(struct_client_info *dest)
 } /* end cli_free_info */
 
 
+int cli_add_to_room_history(struct_client_info *cli, char *room_name,  char *msg,
+                            bool disp)
+{
+    int i;
+
+    /* store the message in the history ring buffer. */
+    for (i=0; i < R_ROOM_MAX; ++i) {
+        if (strcmp(room_name, cli->rooms[i]->room_name) == 0) {
+            /* found the room to add message. */
+            if (room_add_to_history(cli->rooms[i], msg) == FAILURE)
+                return FAILURE;
+
+            if (disp == true)
+                printf("%s", msg);
+            return SUCCESS; 
+        }
+    }
+
+    return FAILURE;
+} /* end cli_add_to_history */
+
+
+/* this is what /void will basically do. */
+void cli_goto_default_room(struct_client_info *cli_info)
+{
+    int i; 
+
+    /* make sure all rooms are left */
+    for (i=0; i < R_ROOM_MAX; ++i) {
+        if (cli_info->rooms[i])
+            room_free_info(cli_info->rooms[i]);
+    }
+
+    cli_info->rooms[0] = room_init_info(); /* allocates initial room */
+
+    cli_info->rooms[0]->room_name = CALLOC_ARRAY(char, sizeof(R_DFLT_ROOM));
+    if (!cli_info->rooms[0]->room_name)
+        errExit("cli_goto_default_room: room_name failed to calloc.");
+
+    cli_info->rooms[0]->room_name = strncpy(cli_info->rooms[0]->room_name, 
+                                            R_DFLT_ROOM, sizeof(R_DFLT_ROOM));
+    cli_info->room_count = 1;
+    cli_info->current_r = 0;
+} /* end cli_goto_default_room */
+
+
+
+
+
 int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
 {
     int len;
@@ -76,18 +125,8 @@ int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
         return FAILURE;
 
     strncpy(cli_info->name, name, len);
-
-    cli_info->rooms[0] = room_init_info(); /* allocates initial room */
-
-    cli_info->rooms[0]->room_name = CALLOC_ARRAY(char, sizeof(R_DFLT_ROOM));
-    if (!cli_info->rooms[0]->room_name)
-        return FAILURE;
-
-    cli_info->rooms[0]->room_name = strncpy(cli_info->rooms[0]->room_name, 
-                                            R_DFLT_ROOM, sizeof(R_DFLT_ROOM));
-    cli_info->room_count = 1;
-    cli_info->current_r = 0;
-
+    
+    cli_goto_default_room(cli_info);
     /* Should be a function for this shit
     cli_info->rooms = CALLOC(struct_room_info);
     if (!cli_info->rooms)
@@ -97,6 +136,67 @@ int cli_set_new_cli_info(struct_client_info *cli_info, char *name)
     return SUCCESS;
 } /* end cli_set_new_cli_info */
 
+/*
+ * Anytime a new room gets added it becomes your forward active room
+ */
+int cli_add_active_room(struct_client_info *cli, char *room_name)
+{
+    int i;
+    
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (cli->rooms[i] == NULL) {
+
+            cli->rooms[i] = CALLOC(struct_room_info);
+            if (!cli->rooms[i])
+                errExit("serv_add_active_room: room failed to CALLOC.");
+
+            cli->rooms[i]->room_name = CALLOC_ARRAY(char, strlen(room_name)+1);
+            if (!cli->rooms[i]->room_name)
+                errExit("serv_add_active_room: room name failed to CALLOC.");
+
+            strcpy(cli->rooms[i]->room_name, room_name);
+            cli->current_r = i;
+            return SUCCESS;
+        }
+    }
+    return FAILURE; /* you are at max number of rooms */
+} /* end serv_add_active_room */
+
+/*
+ * If removing an active room currently being displayed, it takes you to the
+ * first room it finds in your list
+ *
+ */
+int cli_remove_active_room(struct_client_info *cli, char *room_name)
+{
+    int i, ret;
+    bool flag = false;
+
+    for (i=0; i < _R_ROOM_MAX; ++i) {
+        if (cli->rooms[i]) {
+            if (strcmp(cli->rooms[i]->room_name, room_name) == 0) {
+                room_free_info(cli->rooms[i]);
+                cli->rooms[i] = NULL;
+                flag = true;
+                break;
+            } 
+        }
+    }
+
+    /* find a valid index to return. Race condition if doing it in first loop */
+    for (i = 0; i < _R_ROOM_MAX; ++i) {
+        if (cli->rooms[i]) {
+            cli->current_r = i;
+            return SUCCESS;
+        }
+    }
+
+    if (flag) {
+        cli->current_r = 0;
+        return SUCCESS;
+    }
+    return  FAILURE;
+} /* end serv_remove_active_room */
 
 /*******************************************************************************
  *                      Handle Friends List

@@ -100,11 +100,13 @@ void _room_free_info(struct_room_info *dest)
                 free(dest->room_users[i]);
         }
     }
-
-    /* free history indecies */
-    for (i=0; i < _H_STR_MAX ; ++i) {
-        if (dest->history[i]) 
-            free(dest->history[i]);
+    
+    if (dest->history) {
+        /* free history indecies */
+        for (i=0; i < _H_STR_MAX ; ++i) {
+            if (dest->history[i]) 
+                free(dest->history[i]);
+        }
     }
     
     FREE_ALL(dest->room_name, dest->password, dest->room_users, dest->history,

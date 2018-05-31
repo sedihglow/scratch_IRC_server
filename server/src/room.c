@@ -39,6 +39,9 @@ int room_add_history(rbTree *room_list, char *room_name, char *msg)
     len = strlen(msg) + 1; 
     if (room->history[room->hist_end] != NULL) {
         free(room->history[room->hist_end]);
+        room->history[room->hist_end] = NULL;
+
+        room->hist_start = (room->hist_start + 1) % _H_STR_MAX;
     }
     
     /* allocate to appropriate size */
@@ -48,7 +51,6 @@ int room_add_history(rbTree *room_list, char *room_name, char *msg)
 
     /* increment pointer ring */
     room->hist_end = (room->hist_end + 1) % _H_STR_MAX;
-    room->hist_start = (room->hist_start + 1) % _H_STR_MAX;
     
     return SUCCESS;
 } /* end room_add_history */
@@ -58,7 +60,7 @@ int room_add_history(rbTree *room_list, char *room_name, char *msg)
  *
  *  add a user to a room. 
  *
- *  Returns SUCCESS on victory
+ *  Returns num of users in the room on success
  *  Returns EINVAL if room name is too long.
  *  returns FAILURE if room is full.
  ******************************************************************************/
@@ -97,7 +99,7 @@ int room_add_user(rbTree *room_list, char *room_name, char *cli_name)
         return FAILURE;
     }
 
-    return SUCCESS;
+    return room->num_users;
 } /* end room_add_user */
 
 /*******************************************************************************

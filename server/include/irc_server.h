@@ -41,6 +41,8 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
 int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);
+int irc_cli_list_room_users(struct_irc_info *irc_info, 
+                            struct_cli_message *cli_msg);
 
 
 int irc_send_msg_to_cli_tx(struct_cli_info *cli_info, char *msg);

@@ -37,4 +37,6 @@ int com_send_join_result(int fd, char *room_name, uint8_t num_users, uint8_t res
 int com_send_room_message(int fd, char *cli_name, char *room_name, char *msg);
 int com_send_leave_result(int fd, char *room_name, uint8_t res);
 
+int com_send_room_user_messsage(int fd, char *user_name);
+
 void com_send_exit_message(int fd);

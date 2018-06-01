@@ -401,7 +401,7 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
     int ret, i;
-    uint8_t num_users;
+    int num_users;
     struct_cli_info *cli;
 
     /* get clients information */
@@ -477,7 +477,6 @@ int irc_cli_leave_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  */
 int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    int ret;
     struct_cli_info *cli;
     
     /* get clients information */
@@ -493,7 +492,48 @@ int irc_cli_exit_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 
     irc_shutdown_client(irc_info, cli);
     return SUCCESS;
-} /* end cli_exit_cmd */
+} /* end irc_cli_exit_cmd */
+
+
+/*
+ * client to server format: cli_name | RC_RUL | user_name | \r
+ * server to clinet format: RC_RUL | user_name | \r
+ *
+ * TODO: scope is wonky. was just fastest.
+ */
+int irc_cli_list_room_users(struct_irc_info *irc_info, 
+                            struct_cli_message *cli_msg)
+{
+    int i;
+
+    struct_room_list *rooms;
+    struct_room_info *room_info;
+    struct_cli_info *cli;
+    
+    /* get clients information */
+    cli = serv_find_client(cli_msg->cli_name, 0, irc_info->cli_list,
+                           irc_info->num_clients);
+    if (!cli) {
+        errnum_msg(EINVAL, "irc_cli_list_room_users: Client didnt exist?");
+        return FAILURE;
+    }
+
+    rooms = irc_info->rooms;
+    room_info = room_find(&(rooms->rooms), cli_msg->msg);
+    if (!room_info) {
+        com_send_room_user_messsage(cli->sockfd, NULL);
+        return FAILURE;
+    }
+
+    for (i=0; i < _R_USR_MAX; ++i) {
+        if (room_info->room_users[i]) {
+            com_send_room_user_messsage(cli->sockfd, room_info->room_users[i]);
+            usleep(1);
+        }
+    }
+
+    return com_send_room_user_messsage(cli->sockfd, NULL);
+} /* end irc_cli_list_room_users */
 
 /*******************************************************************************
  * irc_handle_cli
@@ -574,7 +614,12 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 
     break;
 
-
+    case RC_RUL:
+        /* send a list of users in a room */
+        if (irc_cli_list_room_users(irc_info, cli_msg) == FAILURE) {
+            _com_free_cli_message(cli_msg);
+            return FAILURE;
+        }
 
     case RC_R_MSG:
     /* Send a message to a particular room.
@@ -582,9 +627,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
      */
 
     break;
-
-
-
 
 
     case RC_VOID:
@@ -598,26 +640,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 
     break;
 
-
-    case RC_RL:
-    /* list all publicly created rooms.
-     * msg format: cli_name | RC_RL | */
-
-    /* Server must then send the name of every room to the client for display.
-     *
-     * lame.
-     *
-     * have the return msg be :
-     *
-     * PRINT | room_name\n 
-     */
-
-    break;
-
-
-
-
-
     case RC_WHO:
     /* from /who <name>
      * msg format: cli_name | RC_WHO | name to check 
@@ -629,21 +651,9 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
 
     break;
 
-
-
-
-
-
     case RC_PM: // if time should be quick when time comes.
     break;
     case RC_PR: // if time should be quick
-    break;
-
-
-    case RC_BL:
-    
-    break;
-    case RC_ERR:
     break;
 
     default:

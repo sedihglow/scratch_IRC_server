@@ -252,6 +252,7 @@ static int cli_remove_friend(struct_flist *flist, char *fname)
             ret = strcmp(flist->list[i], fname); 
             if (ret == 0) {
                 free(flist->list[i]);
+                flist->list[i] = NULL;
                 return SUCCESS;
             }
         }

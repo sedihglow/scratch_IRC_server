@@ -19,9 +19,6 @@
 #define P_RD 0 // value for a pipe read fd in pipefd[2]
 #define P_WR 1 // value for a pip write fd in pipefd[2]
 
-#ifndef __USE_MISC
-    #define __USE_MISC 1 // gives access to random and misc stdlib functions
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,6 +36,10 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <pthread.h>
+
+#ifndef __USE_MISC
+#define __USE_MISC 1 // provide usleep 
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>

@@ -44,8 +44,10 @@
 #define LOG_OUT  "/logout "       //                  : Back to login screen.
 #define INVITE   "/invite "       // /invite <name>   : Invite to current room 
 #define INV      "/inv "          // /inv <name>      : Same as above
-#define ROOM_L   "/room l "       // /channel l       : List all public channels
+#define ROOM_L   "/room l"        // /channel l       : List all public channels
 #define ROOM_LST "/room list "    //                  : Same as above
+#define ROOM_USER_L "/room ul"    // /room ul         : List members of room
+#define ROOM_MSG  "/msg"          // /msg <room> <msg>: send msg to room.
 
 #define PRIV_MSG "/pm "    // /pm <name> "msg" : Send the private shit
 #define PRIV_REP "/r "     // /r "msg"         : Reply to previos PM 

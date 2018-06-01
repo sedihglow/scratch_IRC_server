@@ -35,7 +35,7 @@ static int find_fcmd(char *input)
     if (ret == 0)
         return RC_FA;
 
-    ret = strncmp(input, "l ", 2);
+    ret = strncmp(input, "l", 2);
     if (ret == 0)
         return RC_FL;
 
@@ -76,7 +76,7 @@ static int find_room_cmd(char *input)
  ******************************************************************************/
 int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
-    int ret, type, len;
+    int ret, type, len, rlen;
     char *cli_name = irc_info->client->name;
     char *room_name;
     room_name = irc_info->client->rooms[irc_info->client->current_r]->room_name;
@@ -148,10 +148,46 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
             return FAILURE;
         }
     }
-
-    ret = strncmp(input, ROOM_L, sizeof(ROOM_L)-1);
+    
+    len = sizeof(ROOM_USER_L);
+    ret = strncmp(input, ROOM_USER_L, len-1);
     if (ret == 0) {
-    //    find_room_cmd(input+5);
+        if (input[len-1] == ' ') {         /* list specified room users */
+            ret = com_send_room_users_message(cli_name, input+len, 
+                                              irc_info->serv_info);
+        } else if (input[len-1] == '\0') { /* list current room */
+            ret = com_send_room_users_message(cli_name, room_name, 
+                                              irc_info->serv_info);
+        }
+        return ret;
+    }
+    
+    len = sizeof(ROOM_MSG);
+    ret = strncmp(input, ROOM_MSG, len-1);
+    if (ret == 0) {
+        if (input[len-1] == ' ') { 
+            /* find room name */
+            for (rlen = len; input[rlen] != ' '; ++rlen) {
+                if (input[rlen] == '\0' || (rlen-len) > R_NAME_LEN_MAX)
+                    return FAILURE;
+            }
+            ++rlen;
+
+            room_name = CALLOC_ARRAY(char, rlen-len);
+            if (!room_name)
+                errExit("irc_handle_user_input: Failed to calloc room_name.");
+
+            strncpy(room_name, input+len, rlen-len);
+            room_name[rlen-len-1] = '\0';
+
+            /* make sure client is in the room */
+
+            ret = com_send_chat_message(cli_name, room_name, input+rlen,
+                                        irc_info->serv_info);
+            free(room_name);
+            return ret;
+        }
+        return FAILURE;
     }
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG)-1);
@@ -361,29 +397,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
     snprintf(tmp, IO_BUFF, "%s: %s", (serv_msg->msg)+room_len,
                                      (serv_msg->msg)+msg_start);
 
-#if 0
-    /* place client name in tmp. */
-    i = 0;
-    strncpy(tmp, (serv_msg->msg)+room_len, cli_len);
-    i += cli_len;
-
-    tmp[i] = ':';
-    ++i;
-    tmp[i] = ' ';
-    ++i;
-
-    /* put the message client typed into temp formated */
-    for (j = msg_start; serv_msg->msg[j] != '\r'; ++i, ++j) {
-        if (j == DISP_INSERT_NEWLINE) { 
-            /* make the prints have width limit */
-            tmp[i] = '\n';
-            ++i;
-        }
-        tmp[i] = serv_msg->msg[j];
-    }
-    tmp[i] = '\n';
-#endif
-
     /* if the current room is the room the message is for, set to print */
     if (strcmp(serv_msg->msg, cli->rooms[cli->current_r]->room_name) == 0)
         disp = true;
@@ -392,13 +405,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         noerr_msg("You were not in the room you are sending a message to?");
         return FAILURE;
     }
-
-    /* if the current room index is the same as the room the message is for
-     * then print it to the screen. else return with the saved history.
-     *
-     * TODO: When switching rooms, function to refresh chat w/ history.
-     */
-         
     break;
     case RC_JOIN: /* format: type | num_users | room_name | 0/1 | | \r */
 
@@ -421,7 +427,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         }
 
         /* you have joined a new room prompt. refresh chat with new room. */
-        display_room_welcome(serv_msg->msg, (int)serv_msg->msg[len+1]);
+        display_room_welcome(serv_msg->msg, serv_msg->msg[0]);
 
     break;
 
@@ -446,6 +452,26 @@ int irc_exec_client_response(struct_irc_info *irc_info,
 
     case RC_EXIT:
         /* handled on recv from client at irc_handle_server_requests */
+    break;
+
+    case RC_RUL: /* format: type | user_name | \r (if no more rooms, name NULL) */
+        j = 0; /* num of user count */
+
+
+        printf("%s\n", serv_msg->msg);
+#if 0
+        printf("---- users ----\n");
+        do {
+            ++j;
+            printf("%s\n", serv_msg->msg);
+            receive_from_server(irc_info->serv_info->sockfd, (uint8_t*)tmp, 
+                                IO_BUFF, NO_FLAGS);
+            _com_free_serv_message(serv_msg); 
+            serv_msg = com_parse_server_msg((uint8_t*)tmp);
+        } while (serv_msg->msg[0] != '\0');
+
+        printf("%d number of users\n");
+#endif
     break;
 
     default:

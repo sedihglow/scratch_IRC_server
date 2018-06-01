@@ -295,6 +295,39 @@ int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
     return com_logout_exit_send(cli_name, serv_info, RC_EXIT);
 } /* end com_send_exit_message */
 
+/*
+ * Client to server format: cli_name | type | room name | \r
+ */
+int com_send_room_users_message(char *cli_name, char *room_name, 
+                        struct_serv_info *serv_info)
+{
+    uint8_t *tx;
+    int i;
+    size_t name_len = strlen(cli_name) + 1;
+    size_t room_len = strlen(room_name) + 1;
+    size_t tx_len = MSG_TYPE_SIZE + name_len + room_len + 1;
+
+    tx = CALLOC_ARRAY(uint8_t, tx_len);
+    if (!tx)
+        errExit("com_send_join_request: tx could not calloc");
+
+    i = 0;
+    strncpy((char*)(tx+i), cli_name, name_len);
+    i += name_len;
+
+    tx[i] = RC_RUL;
+    ++i;
+    strncpy((char*)(tx+i), room_name, room_len);
+    i += room_len;
+
+    tx[i] = '\r';
+
+    send_to_server(serv_info->sockfd, tx, tx_len, NO_FLAGS);
+
+    return SUCCESS;
+} /* end com_send_exit_message */
+
+
 struct_serv_message* com_parse_server_msg(uint8_t *input)
 {
     struct_serv_message *serv_msg;
@@ -335,6 +368,10 @@ struct_serv_message* com_parse_server_msg(uint8_t *input)
 
     return serv_msg;
 } /* end com_parse_server_msg */
+
+
+
+
 
 /* 
  *  com_send_logout_message

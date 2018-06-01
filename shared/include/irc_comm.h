@@ -17,7 +17,7 @@
 /* Server connectivity information */
 #define _COM_SERV_ADDR   "10.0.0.169"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   50025 /* port listening on server */
+#define _COM_SERV_PORT   50035 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET        /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM    /* tcp socket */
 #define _COM_IP_PROTOCOL 0              /* Default for type in socket() */
@@ -59,6 +59,7 @@
 #define RC_R_MSG  0x12
 #define RC_HB     0x14
 #define RC_LEAVE  0x15
+#define RC_RUL    0x17 /* list users in a room */
 
 #define RESERVED_Z 0x0  /* was useful to reserve for error checking */
 #define RESERVE_CR 0x13 /* reserved since we use \r in messages */

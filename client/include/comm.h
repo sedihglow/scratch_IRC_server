@@ -35,5 +35,8 @@ int com_send_exit_message(char *cli_name, struct_serv_info *serv_info);
 
 int com_get_logon_result(int fd);
 
+int com_send_room_users_message(char *cli_name, char *room_name, 
+                        struct_serv_info *serv_info);
+
 struct_serv_message* com_parse_server_msg(uint8_t *input);
 #endif

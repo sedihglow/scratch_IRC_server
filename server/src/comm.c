@@ -260,5 +260,34 @@ void com_send_exit_message(int fd)
 {
     uint8_t tx[] = {RC_EXIT, '\r'};
     send_to_client(fd, tx, sizeof(tx), NO_FLAGS);
-}
+} /* end com_send_exit_message */
+
+/* 
+ * If user_name is null, format: RC_RUL | \r
+ * else format : RC_RUL | user name | \r
+ */
+int com_send_room_user_messsage(int fd, char *user_name)
+{
+    uint8_t tx[IO_BUFF] = {'\0'};
+    int len, i;
+    
+    i = 0;
+    tx[i] = RC_RUL;
+    ++i;
+
+    if (!user_name) {
+        tx[i] = '\r';
+        return send_to_client(fd, tx, i+1, NO_FLAGS); 
+    }
+    
+    len = strlen(user_name) + 1;
+    strncpy((char*)(tx+i), user_name, len);
+    i += len;
+
+    tx[i] = '\r';
+
+    return send_to_client(fd, tx, i+1, NO_FLAGS); 
+} /* end com_send_room_user_message */
+
+
 /******* EOF *******/

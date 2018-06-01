@@ -57,8 +57,10 @@ static int check_room_pw(struct_room_info *current_room, char *pw_in)
     return 0;
 } /* end check_room_pw */
 
-int room_switch(struct_room_state *room_state, struct_room_info *new_room) 
+int room_switch(struct_room_state *room_state, struct_room_info *new_room)
 {
+
+
     return 0;
 } /* end room_switch */
 

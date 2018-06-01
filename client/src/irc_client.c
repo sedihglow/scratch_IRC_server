@@ -69,6 +69,28 @@ static int find_room_cmd(char *input)
  *                          Header Functions
  ******************************************************************************/
 
+void irc_switch_current_room(struct_client_info *cli_info, char *room_name)
+{
+    int i;
+    struct_room_info *current;
+
+    if (cli_switch_active_room(cli_info, room_name) == FAILURE) {
+        printf("notice: You were not in that room.\n");
+        disp_input_prompt();
+    }
+
+    current = cli_info->rooms[cli_info->current_r];
+
+    display_clear();
+    printf("notice: Swapped to room %s\n", current->room_name);
+
+    for (i=0; i < _H_STR_MAX; ++i) {
+        if (current->history[i])
+            printf("%s\n", current->history[i]);
+        else 
+            return;
+    }
+} /* end irc_switch_current_room */
 
 /*******************************************************************************
  * Parse's the input of the client. Finds what type of input it was, msg or 
@@ -149,6 +171,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         }
     }
     
+    /* /room ul */
     len = sizeof(ROOM_USER_L);
     ret = strncmp(input, ROOM_USER_L, len-1);
     if (ret == 0) {
@@ -162,6 +185,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         return ret;
     }
     
+    /* /msg <room name> <msg> */
     len = sizeof(ROOM_MSG);
     ret = strncmp(input, ROOM_MSG, len-1);
     if (ret == 0) {
@@ -189,6 +213,18 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         }
         return FAILURE;
     }
+
+    
+    len = sizeof(ROOM_DISP);
+    ret = strncmp(input, ROOM_DISP, len-1);
+    if (ret == 0) {
+        if (input[len-1] == ' ' && input[len] != '\0') {
+            irc_switch_current_room(irc_info->client, input+len);
+            return SUCCESS;
+        }
+        return FAILURE;
+    }
+    
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG)-1);
     if (ret == 0) {

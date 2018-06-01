@@ -48,6 +48,7 @@
 #define ROOM_LST "/room list "    //                  : Same as above
 #define ROOM_USER_L "/room ul"    // /room ul         : List members of room
 #define ROOM_MSG  "/msg"          // /msg <room> <msg>: send msg to room.
+#define ROOM_DISP "/show"         // /show <room name>: change room display
 
 #define PRIV_MSG "/pm "    // /pm <name> "msg" : Send the private shit
 #define PRIV_REP "/r "     // /r "msg"         : Reply to previos PM 
@@ -94,6 +95,8 @@ int cli_add_to_room_history(struct_client_info *cli, char *room_name,
                             char *msg, bool disp);
 
 void cli_goto_default_room(struct_client_info *cli_info);
+
+int cli_switch_active_room(struct_client_info *cli_info, char *room_name);
 /* TODO: Might not have time to implement 
  * int cli_block_enemy(struct_client_info *client, char *name);
  * int cli_inv_friend_to_room(struct_client_info *client, char *name);

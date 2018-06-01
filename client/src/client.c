@@ -298,6 +298,25 @@ int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname)
 }/* end cli_handle_flist */
 
 
+int cli_switch_active_room(struct_client_info *cli_info, char *room_name)
+{
+    int i, ret;
+
+    for (i=0; i < R_ROOM_MAX; ++i) {
+        if (cli_info->rooms[i]) {
+            ret = strncmp(cli_info->rooms[i]->room_name, room_name, 
+                         strlen(room_name) + 1);
+            if (ret == 0) {
+                cli_info->current_r = i;
+                return SUCCESS;
+            }
+        }
+    }
+
+    return FAILURE;
+} /* end cli_switch_active_room */
+
+
 #if 0
 /*******************************************************************************
  * Command: /b l

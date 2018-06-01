@@ -13,6 +13,11 @@
 
 #define DISP_INSERT_NEWLINE 20
 
+#define disp_input_prompt() {                                                  \
+    printf(">> ");                                                             \
+    fflush(stdout);                                                            \
+}
+
 
 typedef struct irc_info {
     struct_client_info *client;
@@ -33,6 +38,7 @@ void irc_logon_client(struct_irc_info *irc_info);
 char* irc_get_user_input(void);
 int irc_handle_user_input(struct_irc_info *irc_info, char *input);
 
+void irc_switch_current_room(struct_client_info *cli_info, char *room_name);
 
 /* Display Functions */
 void display_welcome(void);

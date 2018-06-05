@@ -214,7 +214,6 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         return FAILURE;
     }
 
-    
     len = sizeof(ROOM_DISP);
     ret = strncmp(input, ROOM_DISP, len-1);
     if (ret == 0) {
@@ -338,6 +337,7 @@ void irc_logon_client(struct_irc_info *irc_info)
     int ret;
     size_t len;
     char *input;
+    bool fail_flag = false;
 
     if (irc_info == NULL)
         errExit("irc_logon_client: Initialize things before you get here.");
@@ -352,8 +352,8 @@ void irc_logon_client(struct_irc_info *irc_info)
             errExit("irc_logon_client: strange, nothing read...");
         
         len = strlen(input) + 1;
-        if (len <= CLI_NAME_MAX && len > 1) {
-
+        if (len < CLI_NAME_MAX && len > 1) {
+            fail_flag = false;
             /* inform the server of the clients name and register */
             ret = com_send_logon_message(input, irc_info->serv_info);
             if (_usrLikely(ret == SUCCESS)) {
@@ -369,17 +369,20 @@ void irc_logon_client(struct_irc_info *irc_info)
 
                 } else {
                     printf("Name is already taken, please try again.\n");
+                    fail_flag = true;
                 } // end if-else
             } else {
                 printf("Failed to transmit, please retry.\n"); 
+                    fail_flag = true;
             } // end if-else
         } else {
             printf("Username too long, max 10 characters.\n");
+                    fail_flag = true;
         } // end if-else
 
         FREE_ALL(input);
         /* while response is denied || len */
-     } while (len > CLI_NAME_MAX && len > 1);
+     } while ((len > CLI_NAME_MAX && len > 1) ||  ret == FAILURE);
 } /* end display_logon */
 
 void display_room_welcome(char *room_name, int num_users)
@@ -398,6 +401,7 @@ void display_room_welcome(char *room_name, int num_users)
 
     printf("\nWelcome to the room %s, currently with %d active users.\n\n",
             room_name, num_users);
+    disp_input_prompt();
 } /* end display_room_welcome */
 
 
@@ -420,6 +424,11 @@ int irc_exec_client_response(struct_irc_info *irc_info,
 
     case RC_MSG: /* format: RC_MSG | room_name | client name | msg | \r */
 
+    if (strcmp(cli->rooms[cli->current_r]->room_name, R_DFLT_ROOM) == 0) {
+        /* you are in the void, no message needs to be sent. */
+        return SUCCESS;
+    }
+
     /*
      * TODO: Place in function for adding client message to client hist 
      *       so it can be used when sending message to arbitrary room.
@@ -441,6 +450,9 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         noerr_msg("You were not in the room you are sending a message to?");
         return FAILURE;
     }
+
+    disp_input_promp();
+
     break;
     case RC_JOIN: /* format: type | num_users | room_name | 0/1 | | \r */
 
@@ -480,6 +492,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         
         if (cli->current_r == 0 && cli->rooms[0] == NULL) {
             /* place in void, all rooms empty */
+            display_room_welcome(R_DFLT_ROOM, 0);
             cli_goto_default_room(cli);
         }
 
@@ -491,8 +504,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
     break;
 
     case RC_RUL: /* format: type | user_name | \r (if no more rooms, name NULL) */
-        j = 0; /* num of user count */
-
 
         printf("%s\n", serv_msg->msg);
 #if 0

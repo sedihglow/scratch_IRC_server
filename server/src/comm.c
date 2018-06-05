@@ -148,6 +148,7 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
     return new_msg;
 } /* end parse_cli_message() */
 
+/* server to client format: type | 1/0 | '\r' */
 int com_send_logon_result(int fd, uint8_t payload)
 {
     int ret;

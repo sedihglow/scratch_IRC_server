@@ -34,7 +34,13 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info);
 
 int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info);
 
-/* TODO: Incomplete, not setting clients TX buffer yet. */
+/* 
+ * TODO: Incomplete, not setting clients TX buffer yet. 
+ *
+ *       NOTE: Might not use the tc rx ring buffers after all.
+ *             Might have the possibility of scaling better preventing
+ *             blocking loops for the server to the mass clients.
+ */
 int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli);
 int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg);

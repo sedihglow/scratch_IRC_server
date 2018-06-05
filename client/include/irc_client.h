@@ -18,7 +18,6 @@
     fflush(stdout);                                                            \
 }
 
-
 typedef struct irc_info {
     struct_client_info *client;
     struct_serv_info   *serv_info;
@@ -50,6 +49,5 @@ void display_new_room(char *room_name, int num_users);
 void* irc_handle_server_requests(void *args);
 int irc_exec_client_response(struct_irc_info *irc_info, 
                              struct_serv_message *serv_msg);
-
 #endif
 /****** EOF *****/

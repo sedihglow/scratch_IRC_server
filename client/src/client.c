@@ -205,12 +205,13 @@ static int cli_remove_friend(struct_flist *flist, char *fname);
 static void cli_display_friends(struct_flist *flist)
 {
     int i;
-    printf("---- Friends ----\n Total on list: %d\n\n", flist->fcount);
+    printf("---- Friends ----\n Total on list: %d\n", flist->fcount);
 
     for (i=0; i < F_MAX; ++i) {
         if (flist->list[i])
             printf("%s\n",flist->list[i]);
     }
+    printf("\n");
 } /* end display_friends */
 
 

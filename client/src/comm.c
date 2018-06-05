@@ -147,9 +147,12 @@ int com_send_logon_message(char *name, struct_serv_info *serv_info)
     return SUCCESS;
 } /* end com_send_logon_message */
 
+/* server reply format : type | 1/0 | '\r' */
 int com_get_logon_result(int fd)
 {
     uint8_t rx[IO_BUFF] = {'\0'};
+
+    usleep(1);
 
     /* should... block until data is recieved. */
     receive_from_server(fd, rx, IO_BUFF, NO_FLAGS);

@@ -15,9 +15,9 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.0.0.169"
+#define _COM_SERV_ADDR   "10.200.248.135"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
-#define _COM_SERV_PORT   50035 /* port listening on server */
+#define _COM_SERV_PORT   50039 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET        /* network domain we are using. IPV4 */
 #define _COM_SOCK_TYPE   SOCK_STREAM    /* tcp socket */
 #define _COM_IP_PROTOCOL 0              /* Default for type in socket() */

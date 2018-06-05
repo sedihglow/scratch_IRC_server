@@ -188,15 +188,6 @@ void irc_free_info(struct_irc_info *irc_info)
  *
  * Failure means name is taken and client is removed from all lists and can
  * try again.
- *
- *
- * TODO: Not a finished function.
- * 
- * TODO: Might want to write a function that compares the file descriptor in
- *       case multiple people are the DELETE_CLI string at once, trying
- *       to access at the same time when the username is taken :/
- *
- *       Maybe send cli_info into serv_remove_client
  ******************************************************************************/
 int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli) 
@@ -210,9 +201,11 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
     /* By now, we know it is a logon messages, shit was parsed and checked */
     tmp = serv_find_client(cli_msg->cli_name, cli->sockfd, irc_info->cli_list, 
                            irc_info->num_clients);
+    if (tmp == NULL)
+        return FAILURE;
     
-    if (tmp != NULL && strcmp(cli_msg->cli_name, DELETE_CLI) != 0) { 
-        /* successful name choice. */   
+    if (tmp != NULL && tmp->name == NULL) { 
+        /* successful name choice. not taken. */   
         len = strlen(cli_msg->cli_name) + 1; 
         cli->name = CALLOC_ARRAY(char, len);
         if (!cli->name)
@@ -544,7 +537,8 @@ int irc_cli_list_room_users(struct_irc_info *irc_info,
  * Returns FAILURE if anything bad happens.
  *
  * TODO: Will set ERRNO to identify different errors probably. Or hand made 
- *       error codes using errno as a vessel.
+ *       error codes using errno as a vessel. If time to specify to client by
+ *       deadline.
  ******************************************************************************/
 int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info) 
 {
@@ -559,7 +553,10 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     }
 
     /* Parse message */
-    /* TODO: Currently if it crashes before RC_LOGON, seg fault due to name. */
+    /* TODO: Currently if it crashes before RC_LOGON, seg fault due to name. 
+     *
+     * I Think this is fixed. Delete after solving multiple same name behavior.
+     */
     cli_msg = com_parse_cli_message(rx);
     if (!cli_msg) {
         /* drop client and move on. likely crashed. */
@@ -577,7 +574,7 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
             return FAILURE;
         }
     break;
-
+    
     case RC_JOIN:
         /* join a specified room. */
         if (irc_cli_join_cmd(irc_info, cli_msg) == FAILURE) {
@@ -603,7 +600,8 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     break;
 
     case RC_EXIT:
-        /* client is about to shutdown, 
+        /* 
+         * client is about to shutdown, 
          * feel free to drop them from all the things.
          * msg format: cli_name | RC_EXIT
          */

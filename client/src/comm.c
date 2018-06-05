@@ -120,6 +120,7 @@ ssize_t receive_from_server(int sockfd, uint8_t *rx, size_t len, int flags)
     return socket_receive(sockfd, rx, len, flags);
 } /* end recieve_from_server */
 
+/* client to server format: cli name | type | \r */
 int com_send_logon_message(char *name, struct_serv_info *serv_info)
 {
     uint8_t *msg;

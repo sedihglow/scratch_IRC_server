@@ -319,8 +319,11 @@ char* irc_get_user_input(void)
 
 void display_clear(void)
 {
-    char newline[100] = {'\n'};
-    printf("%s",newline);
+    int i;
+    for (i=0; i < 10; ++i) {
+        printf("\n\n\n\n\n\n\n\n\n\n");
+    }
+    fflush(stdout);
 } /* end display_clear */
 
 void display_welcome(void)
@@ -398,7 +401,8 @@ void display_room_welcome(char *room_name, int num_users)
             printf("You are in silence.\n");
         return;
     }
-
+    
+    display_clear();
     printf("\nWelcome to the room %s, currently with %d active users.\n\n",
             room_name, num_users);
     disp_input_prompt();
@@ -451,7 +455,7 @@ int irc_exec_client_response(struct_irc_info *irc_info,
         return FAILURE;
     }
 
-    disp_input_promp();
+    disp_input_prompt();
 
     break;
     case RC_JOIN: /* format: type | num_users | room_name | 0/1 | | \r */
@@ -476,7 +480,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
 
         /* you have joined a new room prompt. refresh chat with new room. */
         display_room_welcome(serv_msg->msg, serv_msg->msg[0]);
-
     break;
 
     case RC_LEAVE: /* format: type | room_name | 0/1 | \r */
@@ -495,8 +498,6 @@ int irc_exec_client_response(struct_irc_info *irc_info,
             display_room_welcome(R_DFLT_ROOM, 0);
             cli_goto_default_room(cli);
         }
-
-        printf("RC_LEAVE RECIEVED AND EXECUTED\n");
     break;
 
     case RC_EXIT:
@@ -504,21 +505,12 @@ int irc_exec_client_response(struct_irc_info *irc_info,
     break;
 
     case RC_RUL: /* format: type | user_name | \r (if no more rooms, name NULL) */
-
-        printf("%s\n", serv_msg->msg);
-#if 0
-        printf("---- users ----\n");
-        do {
-            ++j;
+        
+        if (serv_msg->msg == NULL || serv_msg->msg[0] == '\0') {
+            disp_input_prompt();
+        } else {
             printf("%s\n", serv_msg->msg);
-            receive_from_server(irc_info->serv_info->sockfd, (uint8_t*)tmp, 
-                                IO_BUFF, NO_FLAGS);
-            _com_free_serv_message(serv_msg); 
-            serv_msg = com_parse_server_msg((uint8_t*)tmp);
-        } while (serv_msg->msg[0] != '\0');
-
-        printf("%d number of users\n");
-#endif
+        }
     break;
 
     default:
@@ -540,10 +532,14 @@ void* irc_handle_server_requests(void *args)
         /* block waiting for message from server. */
         receive_from_server(irc_info->serv_info->sockfd, rx, _COM_IO_BUFF, 
                             NO_FLAGS);
-        if (rx[0] == 0x0 || rx[0] == RC_EXIT) { 
+        if (rx[0] == 0x0) {
             printf("Server has crashed. Exiting program.\n");
-            /* server crashed or i have a bug */
             g_serv_crashed = true;
+            pthread_exit(NULL);
+        }
+        
+        if (rx[0] == RC_EXIT) { 
+            printf("Exiting program.\n");
             pthread_exit(NULL);
         }
 
@@ -597,15 +593,14 @@ void irc_client(void)
         fflush(stdout);
         input = irc_get_user_input();
 
-        if (g_serv_crashed == true) {
+        if (g_serv_crashed == true)
             break;
-        }
 
         ret = irc_handle_user_input(irc_info, input);
 
         if (ret == FAILURE) {
             printf("- INVALID COMMAND -\n");
-        } else if (ret == RC_EXIT || g_serv_crashed == true) {
+        } else if (ret == RC_EXIT /*|| g_serv_crashed == true */) {
             break;
         }
         free(input);

@@ -18,8 +18,10 @@ void irc_fill_fd_set_read(struct_irc_info *irc_info, fd_set *readfds)
     int size;
     int *list;
 
-    if (!irc_info || !irc_info->full_fd_list || !readfds) {
-        errnum_msg(EINVAL, "fill_fd_set_read: info, fdlist or readfs was NULL.");
+    if (!irc_info || !readfds) {
+        errnum_msg(EINVAL, "fill_fd_set_read: info or readfs was NULL.");
+        return;
+    } else if (!irc_info->full_fd_list) {
         return;
     }
 
@@ -52,6 +54,7 @@ int* irc_add_fd_list(struct_irc_info *info, int newfd)
     if (!info->full_fd_list && info->num_fds == 0) {
         new_list = CALLOC(int);
         new_list[0] = newfd;
+        ++(info->num_fds);
         return new_list;
     }
     
@@ -97,6 +100,7 @@ int* irc_remove_fd_list(struct_irc_info *info, int fd)
 
     if (info->num_fds == 1) {
         free(info->full_fd_list);
+        info->full_fd_list = NULL;
         return info->full_fd_list;
     }
 
@@ -405,13 +409,10 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
         return FAILURE;
     }
 
-    i = strlen(cli_msg->msg) + 2; /* index of num_users */
-    num_users = cli_msg->msg[i];
-
     /* add new room to active room list for client */
     if (serv_add_active_room(cli, cli_msg->msg) == FAILURE) {
         /* user is in max ammount of rooms. */
-        com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
+        com_send_join_result(cli->sockfd, cli_msg->msg, 0,
                              _REPLY_FAILURE);
         return SUCCESS;
     }
@@ -419,12 +420,10 @@ int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
     /* add client to the room if there is space */
     num_users = serv_add_to_room(irc_info->rooms, cli_msg->msg, cli->name);
     if (num_users == FAILURE) {
-        serv_remove_active_room(cli, cli_msg->msg);
-        com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
+        com_send_join_result(cli->sockfd, cli_msg->msg, 0,
                              _REPLY_FAILURE);
         return FAILURE;
     }
-
 
     /* client successfully added to room, let them know. */
     return com_send_join_result(cli->sockfd, cli_msg->msg, num_users,
@@ -664,6 +663,32 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     return SUCCESS;
 } /* irc_handle_cli */
 
+
+/* 
+ * Currently Checks to make sure the command is the exit command. 
+ * This is where the server debug interface would have come into play for 
+ * parsing manual commands.
+ */
+int irc_check_direct_input(struct_irc_info *irc_info)
+{
+    char buff[DIRECT_IO_SIZE] = {'\0'};
+    int retBytes = 0;
+
+    /* get message from stdin. newline check, clear buffer, etc. */
+    READ_INPUT(STDIN_FILENO, buff, DIRECT_IO_SIZE, retBytes);
+    if (retBytes == FAILURE)
+        return FAILURE;
+
+    /* remove newline, if it wasnt a newline was invalid command anyway. */
+    buff[strlen(buff)-1] = '\0';
+
+    /* make sure the command is /exit */
+    if (strcmp(buff, EXIT_CMD) == 0)
+        return EXIT_NUM;
+
+    return FAILURE;
+} /* end irc_handle_manual_server_command */
+
 /*******************************************************************************
  * TODO: Cleaning up on error before exiting not implemented yet. Mallocs not
  *       freed on error yet. Waiting until i know how i want to handle them
@@ -695,16 +720,19 @@ void irc_server(void)
 
     init_server_comm(irc_serv_info);
 
-    /* initialize full_fd_list, adds the server socket file descriptor */
+    /* initialize full_fd_list */
+    /* adds the server socket file descriptor */
     irc_info->full_fd_list = irc_add_fd_list(irc_info, 
                                              irc_info->serv_info->sockfd);
+    /* adds stdin to socket file descriptor */
+    irc_info->full_fd_list = irc_add_fd_list(irc_info, STDIN_FILENO);
 
     /* 
      * start nfds to 1 greater than # of descriptors. Starting garunteed 
      * descriptors are stdin, stdout, stderr, server socket fd.
      */
-    irc_info->num_fds = 1; /* the server fd */
-    nfds = 5;
+    irc_info->num_fds = 2; /* the server fd and STDIN */
+    nfds = 6;
 
     while (true) { /* TODO: Tempararily true until signal handling happens */
 
@@ -715,6 +743,14 @@ void irc_server(void)
         ret = select(nfds, &readfds, NULL, NULL, &timeout); 
         if (ret < 0)
             errExit("irc_server: Invalid file descriptor given to select.");
+
+        /* TODO: Not sure if you put this at end or start of the loop */
+        if (FD_ISSET(STDIN_FILENO, &readfds)) {
+            ret = irc_check_direct_input(irc_info);
+            if (ret == FAILURE)
+                continue;
+            break;
+        }
        
         /* no fd is currently available for reads. loop back for now */
         if (ret == 0)
@@ -736,5 +772,8 @@ void irc_server(void)
                 ret = irc_handle_cli(irc_info, (irc_info->cli_list)[i]);
         }
     } // end while
+
+    /* free all the info. */
+    irc_free_info(irc_info);
 } /* end irc_server */
 /******* EOF ********/

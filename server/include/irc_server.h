@@ -8,7 +8,10 @@
 #include "comm.h"
 #include "server.h"
 
-#define DELETE_CLI "c@tz"
+#define EXIT_CMD "/exit"
+#define EXIT_NUM 0x0
+#define DIRECT_IO_SIZE 10
+
 
 typedef struct irc_info {
     int *full_fd_list;  /* server + client */
@@ -33,6 +36,8 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info);
 
 
 int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info);
+
+int irc_check_direct_input(struct_irc_info *irc_info);
 
 /* 
  * TODO: Incomplete, not setting clients TX buffer yet. 

@@ -81,8 +81,8 @@ void irc_switch_current_room(struct_client_info *cli_info, char *room_name)
 
     current = cli_info->rooms[cli_info->current_r];
 
+    
     display_clear();
-    printf("notice: Swapped to room %s\n", current->room_name);
 
     for (i=0; i < _H_STR_MAX; ++i) {
         if (current->history[i])
@@ -90,6 +90,9 @@ void irc_switch_current_room(struct_client_info *cli_info, char *room_name)
         else 
             return;
     }
+
+    printf("notice: Swapped to room %s\n", current->room_name);
+    disp_input_prompt();
 } /* end irc_switch_current_room */
 
 /*******************************************************************************
@@ -154,6 +157,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         } else {
             return FAILURE; /* invalid command */
         }
+        disp_input_prompt();
         return ret;
     }
 
@@ -364,9 +368,10 @@ void display_active_rooms(struct_client_info *cli)
     
     printf("--- Currently Active Rooms ----\n");
     for (i=0; i < R_ROOM_MAX; ++i) {
-        printf("%s\n", cli->rooms[i]->room_name);
+        if (cli->rooms[i])
+            printf("%s\n", cli->rooms[i]->room_name);
     }
-    printf("\n");
+    printf("Total of %d rooms.\n", cli->room_count);
     disp_input_prompt();
 } /* end display_active_rooms */
 
@@ -636,7 +641,6 @@ void irc_client(void)
 
         if (ret == FAILURE) {
             printf("- INVALID COMMAND -\n");
-            disp_input_prompt();
         } else if (ret == RC_EXIT /*|| g_serv_crashed == true */) {
             break;
         }

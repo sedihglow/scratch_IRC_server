@@ -149,6 +149,7 @@ int cli_add_active_room(struct_client_info *cli, char *room_name)
 
             strcpy(cli->rooms[i]->room_name, room_name);
             cli->current_r = i;
+            ++(cli->room_count);
             return SUCCESS;
         }
     }
@@ -170,25 +171,27 @@ int cli_remove_active_room(struct_client_info *cli, char *room_name)
             if (strcmp(cli->rooms[i]->room_name, room_name) == 0) {
                 room_free_info(cli->rooms[i]);
                 cli->rooms[i] = NULL;
+                --(cli->room_count);
                 flag = true;
                 break;
             } 
         }
     }
 
-    /* find a valid index to return. Race condition if doing it in first loop */
-    for (i = 0; i < _R_ROOM_MAX; ++i) {
-        if (cli->rooms[i]) {
-            cli->current_r = i;
-            return SUCCESS;
+    /* i will be 1 index higher than _R_OOM_MAX if room not found */
+    if (cli->current_r == i) {
+        /* find a valid index to return. Race condition if doing it in first loop */
+        for (i = 0; i < _R_ROOM_MAX; ++i) {
+            if (cli->rooms[i] && cli->rooms[i]->room_name) {
+                irc_switch_current_room(cli, cli->rooms[i]->room_name);
+                return SUCCESS;
+            }
         }
-    }
 
-    if (flag) {
-        cli->current_r = 0;
-        return SUCCESS;
+            cli->current_r = 0;
+            return SUCCESS;
     }
-    return  FAILURE;
+    return flag ?  SUCCESS : FAILURE;
 } /* end serv_remove_active_room */
 
 /*******************************************************************************

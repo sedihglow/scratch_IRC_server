@@ -125,11 +125,19 @@ int room_remove_user(rbTree *room_list, char *room_name, char *cli_name)
     return _room_remove_user(room, cli_name);
 } /* end room_remove_user */
 
+/*
+ * Free's a specified room by room name.
+ */
 int room_free(rbTree *room_list, char *room_name) 
 {
     return (remove_first(room_list, room_name) ? SUCCESS : FAILURE);
 } /* end room_free */
 
+
+void room_free_all(rbTree *room_list)
+{
+    remove_all(room_list);
+} /* end room_free_all */
 
 
 /* 

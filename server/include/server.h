@@ -16,8 +16,6 @@ typedef struct client_info{
     char *name;
     char *active_rooms[_R_ROOM_MAX];
     int sockfd;
-    struct_io_ring *tx;
-    struct_io_ring *rx;
     struct sockaddr_in socket_info;
 }struct_cli_info;
 
@@ -42,10 +40,6 @@ int serv_add_active_room(struct_cli_info *cli, char *room_name);
 
 void serv_free_client(struct_room_list *rooms, struct_cli_info *cli);
 
-/* TODO: Fuctions that call room.c should be here. Will fix scope if time and
- * have irc_server.c call functions out of server.h only.
- */
-
 int serv_add_to_room(struct_room_list *rooms, char *room_name, char *cli_name);
 int serv_rem_from_room(struct_room_list *rooms, char *room_name, char *cli_name);
-int serv_room_msg();      // give a new message to a room.
+void serv_free_room_list(struct_room_list *room_list);

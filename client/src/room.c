@@ -33,7 +33,7 @@ struct_room_state* room_init_state(void)
 struct_room_info*  room_init_info(void)
 {
     return _room_init_info(true, NULL);
-}
+} /* end room_init_info */
 
 void room_free_state(struct_room_state *dest)
 {
@@ -56,13 +56,6 @@ static int check_room_pw(struct_room_info *current_room, char *pw_in)
 {
     return 0;
 } /* end check_room_pw */
-
-int room_switch(struct_room_state *room_state, struct_room_info *new_room)
-{
-
-
-    return 0;
-} /* end room_switch */
 
 int room_add_to_history(struct_room_info *room, char *msg) 
 {
@@ -87,5 +80,4 @@ int room_add_to_history(struct_room_info *room, char *msg)
     
     return SUCCESS;
 } /* end room_add_to_history */
-
 /**** EOF ****/

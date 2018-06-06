@@ -25,8 +25,5 @@ struct_room_state* room_init_state(void);
 struct_room_info*  room_init_info(void);
 void room_free_state(struct_room_state *dest);
 void room_free_info(struct_room_info *dest);
-
 int room_add_to_history(struct_room_info *room, char *msg);
-
-int room_switch(struct_room_state *room_state, struct_room_info *new_room);
 /***** EOF *****/

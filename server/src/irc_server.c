@@ -170,17 +170,21 @@ void irc_free_info(struct_irc_info *irc_info)
 {
     int i;
 
-    if (irc_info->cli_list) {  
+    /* freeing cli_list if not null */
+    if (irc_info->cli_list) {
+        /* remove all the indecies */
         for (i=0; i < irc_info->num_clients; ++i) {
             if (_usrLikely(irc_info->cli_list[i] != NULL))
-                free(irc_info->cli_list[i]);
+                irc_shutdown_client(irc_info, irc_info->cli_list[i]);
         }
+
         free(irc_info->cli_list);
     }
 
     _com_free_serv_info(irc_info->serv_info);
 
-    /* TODO: Free room list properly. */
+    serv_free_room_list(irc_info->rooms);
+    free(irc_info->rooms);
     
     if (irc_info->full_fd_list)
         free(irc_info->full_fd_list);
@@ -197,7 +201,6 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
                        struct_cli_info *cli) 
 {
     struct_cli_info *tmp;
-    struct_cli_info **cli_ret;
     int ret;
     int len;
     
@@ -237,16 +240,16 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
 
-    /* remove from client list. Had to utilize dumb string because scope */
-    cli_ret = serv_remove_client(NULL, irc_info->cli_list, 
+    /* remove from client list. */
+    errno = 0;
+    irc_info->cli_list = serv_remove_client(NULL, irc_info->cli_list, 
                                      irc_info->num_clients, cli->sockfd);
-    if (cli_ret != NULL) 
-        irc_info->cli_list = cli_ret;
+    if (errno == EINVAL) {
+        return FAILURE;
+    }
 
     --(irc_info->num_clients);
     /* note you leave it open. */
-
-/* TODO: Might use the shutdown function here and just have cli redo connect*/
 
     printf("client FAILED to be accepted and is responded to\n");
     return FAILURE;
@@ -256,17 +259,23 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
     struct_cli_info **ret; 
     
+    shutdown(cli_info->sockfd, SHUT_RDWR);
+
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli_info->sockfd);
 
-    /* remove from client list. Had to utilize dumb string because scope */
+    /* remove from client list. */
+    errno = 0;
     irc_info->cli_list = serv_remove_client(cli_info->name, irc_info->cli_list, 
                                      irc_info->num_clients, cli_info->sockfd);
+    if (errno == EINVAL) {
+        errno = 0;
+        return FAILURE;
+    }
+
     --(irc_info->num_clients);
 
     serv_free_client(irc_info->rooms, cli_info);
-
-    shutdown(cli_info->sockfd, SHUT_RDWR);
 
     return SUCCESS;
 } /* end irc_shutdown_client */
@@ -290,12 +299,6 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
         errExit("irc_take_new_connection: accepting connection failed.\n");
 
     /* set file descriptor to non-blocking I/O */
-    /* TODO MYSTERY TO TEST: I think my client and my server get the same
-     *                       file descriptor on the same socket which wouldnt
-     *                       happen in the real world situation, but may have
-     *                       affected tested. LOL
-     */
-    //fcntl(cli_info->sockfd, F_SETFL, O_NONBLOCK);
 
     irc_info->full_fd_list = irc_add_fd_list(irc_info, cli_info->sockfd);
     ++(*nfds);
@@ -663,13 +666,12 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     return SUCCESS;
 } /* irc_handle_cli */
 
-
 /* 
  * Currently Checks to make sure the command is the exit command. 
  * This is where the server debug interface would have come into play for 
  * parsing manual commands.
  */
-int irc_check_direct_input(struct_irc_info *irc_info)
+int irc_check_direct_input(void)
 {
     char buff[DIRECT_IO_SIZE] = {'\0'};
     int retBytes = 0;
@@ -689,13 +691,6 @@ int irc_check_direct_input(struct_irc_info *irc_info)
     return FAILURE;
 } /* end irc_handle_manual_server_command */
 
-/*******************************************************************************
- * TODO: Cleaning up on error before exiting not implemented yet. Mallocs not
- *       freed on error yet. Waiting until i know how i want to handle them
- *       since in user space.
- *
- *       pull malloc and calloc macros into this beetch.
- ******************************************************************************/
 void irc_server(void)
 {
     char rx[IO_BUFF] = {'\0'}; /* TODO: likely temp buffer during dev. */
@@ -734,8 +729,7 @@ void irc_server(void)
     irc_info->num_fds = 2; /* the server fd and STDIN */
     nfds = 6;
 
-    while (true) { /* TODO: Tempararily true until signal handling happens */
-
+    for ( ;; ) {
         /* see if any file descriptors are ready for reading */
         irc_fill_fd_set_read(irc_info, &readfds);
         timeout.tv_sec = timeout.tv_usec = 0;
@@ -746,7 +740,7 @@ void irc_server(void)
 
         /* TODO: Not sure if you put this at end or start of the loop */
         if (FD_ISSET(STDIN_FILENO, &readfds)) {
-            ret = irc_check_direct_input(irc_info);
+            ret = irc_check_direct_input();
             if (ret == FAILURE)
                 continue;
             break;
@@ -759,7 +753,7 @@ void irc_server(void)
         /* if server socket is ready for reading with incoming transmittion */
         if (FD_ISSET(irc_serv_info->sockfd, &readfds)) {
             /* accept and init  new client message */
-            printf("\nClient connected\n ");
+            printf("\nClient connected\n");
             irc_take_new_connection(&nfds, irc_info);
             continue;
         }
@@ -771,7 +765,11 @@ void irc_server(void)
             if (ret)
                 ret = irc_handle_cli(irc_info, (irc_info->cli_list)[i]);
         }
-    } // end while
+    } /* end while */
+
+    /* shutdown all active sockets */
+    for (i=0; i < irc_info->num_clients; ++i)
+        irc_shutdown_client(irc_info, irc_info->cli_list[i]);
 
     /* free all the info. */
     irc_free_info(irc_info);

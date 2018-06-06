@@ -7,6 +7,11 @@
 
 #include "../include/server.h"
 
+void serv_free_room_list(struct_room_list *room_list)
+{
+    room_free_all(&(room_list->rooms));
+} /* end serv_free_room_list */
+
 /*******************************************************************************
  *
  *  serv_add_client
@@ -38,26 +43,26 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
     unsigned int i;
     struct_cli_info **new_list;
 
+    /* make sure there is a new client actually passed */
     if (!new_cli || !*new_cli) {
-        printf("new cli: %x, *new_cli, %x");
         errno = EINVAL;
         errnum_msg(EINVAL, "serv_add_client: new_cli == NULL");
-        return NULL;
+        return old_list;
     }
 
-    if (!old_list) {
+#if 0
+    if (!old_list) js
         new_list = CALLOC(struct_cli_info*);
         new_list[0] = *new_cli;
-        *new_cli = NULL;
         return new_list;
-    }
-    else if (old_size == 0) {
-        FREE_ALL(old_list[0], old_list);
+    } else if (old_size == 0) {
+        /* size of zero implies *old_list is NULL */
+        FREE_ALL(old_list);
         new_list = CALLOC(struct_cli_info*);
         new_list[0] = *new_cli;
-        *new_cli = NULL;
         return new_list;
     }
+#endif
     
     new_list = CALLOC_ARRAY(struct_cli_info*, old_size+1);
 
@@ -66,14 +71,10 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
 
     new_list[i] = *new_cli;
 
-    *new_cli = NULL;
-
     free(old_list);
 
     return new_list;
 } /* end serv_add_client() */
-
-
 
 /* Free's the client passed */
 void serv_free_client(struct_room_list *rooms, struct_cli_info *cli)
@@ -87,13 +88,11 @@ void serv_free_client(struct_room_list *rooms, struct_cli_info *cli)
                                      cli->name);
             if (ret == FAILURE)
                 noerr_msg("serv_free_client: Something failed removing");
-            free(cli->active_rooms[i]);
+            FREE_ALL(cli->active_rooms[i]);
             cli->active_rooms[i] = NULL;
         }
     }
 
-    /* TODO: Remove tx and rx if they even get used.. */
-    
     /* free remaining client information and the former client list. */
     FREE_ALL(cli->name, cli);
 } /* end serv_free_client */
@@ -111,34 +110,35 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
 {
     unsigned int i, j;
     int ret;
-    struct_cli_info **new_list;
+    struct_cli_info **new_list = NULL;
     struct_cli_info *remove = NULL;
 
     /* check if there is anything to remove */
     if (!old_list)
-        return NULL; 
+        return old_list; 
 
-    
-    new_list = CALLOC_ARRAY(struct_cli_info*, old_size-1);
-    
-    if (name)
+        
+    if (name) {
         remove = serv_find_client(name, sockfd, old_list, old_size);
-    else
+    } else {
         remove = serv_find_fd_client(sockfd, old_list, old_size);
+    }
 
     if (!remove) {
         errno = EINVAL;
         noerr_msg("serv_remove_client: client %s not found in client list.");
-        return NULL; 
+        return old_list; 
     }
 
-    if (old_size < 2) {
-        old_list[0] = NULL;
+    if (old_size-1 == 0) {
+        FREE_ALL(old_list);
         return NULL;
     }
 
+    new_list = CALLOC_ARRAY(struct_cli_info*, old_size-1);
+
     /* create new list */
-    j = 0;
+    j = 0; 
     for (i=0; i < old_size; ++i) {
         if (old_list[i] != remove) {
             new_list[j] = old_list[i];
@@ -146,6 +146,7 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
         }
     }
 
+    FREE_ALL(old_list);
     return new_list;
 } /* end serv_remove_client() */
 
@@ -155,7 +156,6 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
  *
  * Returns NULL if client is not in the list.
  * Returns pointer to found client struct on success
- *  TODO: Untested 
  ******************************************************************************/
 struct_cli_info* serv_find_client(char *find, int fd, struct_cli_info **cli_list, 
                                   size_t size)

@@ -23,16 +23,6 @@ void com_free_serv_info(struct_serv_info *dest)
     _com_free_serv_info(dest);
 } /* end com_free_serv_info */
 
-void com_free_io_ring(struct_io_ring *dest)
-{
-    _com_free_io_ring(dest);
-}
-
-// TODO: Might just make this a display, only local to client, not to history
-int request_who(char *name, bool *online)
-{
-    return false;
-} /* end request_who */
 
 static int connect_to_server(struct_serv_info *serv_info)
 {

@@ -37,6 +37,9 @@ int open_connection(struct_serv_info *serv_info)
     return SUCCESS;
 } /* end open_connection() */
 
+/*
+ * Startup initial server socket
+ */
 int init_server_comm(struct_serv_info *serv_info)
 {
     struct sockaddr_in *addr_tmp = serv_info->socket_info;
@@ -87,12 +90,10 @@ ssize_t receive_from_client(int sockfd, uint8_t *rx, size_t len, int flags)
     return socket_receive(sockfd, rx, len, flags);
 } /* end recieve_from_client */
 
-
 /*******************************************************************************
  * com_parse_cli_message
  *
- * TODO: Memory is not cleaned up on error yet.
- *       Also untested.
+ * seperate rx into the struct_cli_message fields.
  ******************************************************************************/
 struct_cli_message* com_parse_cli_message(uint8_t *rx)
 {
@@ -156,10 +157,9 @@ int com_send_logon_result(int fd, uint8_t payload)
     printf("sending logon result.\n");
     ret = send_to_client(fd, tx, sizeof(tx), NO_FLAGS);
     if (ret == FAILURE) {
-        printf("sending logon result FAILED.\n");
+        noerr_msg("sending logon result FAILED.\n");
         return FAILURE;
     }
-    printf("sending logon result SUCCESS.\n");
     return SUCCESS;
 } /* end com_send_logon_result */
 
@@ -203,11 +203,7 @@ static int com_send_join_leave_result(int fd, char *room_name, uint8_t num_users
     return send_to_client(fd, tx, i+1, NO_FLAGS);
 } /* end com_send_join_leave_result */
 
-
 /*
- * TODO: if more time would send all the users so it could populate and
- *       be persistantly displayed w/ updates
- *
  * server to client format: RC_JOIN | num_users | room_name  | 1/0 | '\r'
  */
 int com_send_join_result(int fd, char *room_name, uint8_t num_users, uint8_t res)
@@ -257,6 +253,9 @@ int com_send_room_message(int fd, char *room_name, char *cli_name, char *msg)
     return send_to_client(fd, tx, i+1, NO_FLAGS);
 } /* end com_send_room_message */
 
+/*
+ * server to client format: RC_EXIT | \r
+ */
 void com_send_exit_message(int fd) 
 {
     uint8_t tx[] = {RC_EXIT, '\r'};
@@ -289,6 +288,4 @@ int com_send_room_user_messsage(int fd, char *user_name)
 
     return send_to_client(fd, tx, i+1, NO_FLAGS); 
 } /* end com_send_room_user_message */
-
-
 /******* EOF *******/

@@ -231,12 +231,14 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
         return SUCCESS;
     }
 
+
     /* client name taken or reserved, remove from lists */
     noerr_msg("Client name is taken. Try again client person.");
 
     /* let client know success */
     com_send_logon_result(cli->sockfd, LOGON_FAILURE);
 
+#if 0
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
 
@@ -252,6 +254,7 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
     /* note you leave it open. */
 
     printf("client FAILED to be accepted and is responded to\n");
+#endif
     return FAILURE;
 } /* end irc_accept_new_cli */
 
@@ -392,8 +395,6 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  *  Returns SUCCESS or FAILURE.
  *
  *  FAILURE state occurs if room attempting to join is full.
- *
- *  TODO: Use errno to identify the error?
  *
  * server to client format: RC_JOIN | room_name | 1/0 | num_users | '\r'
  *

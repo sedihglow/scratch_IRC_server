@@ -159,11 +159,10 @@ int cli_add_active_room(struct_client_info *cli, char *room_name)
 /*
  * If removing an active room currently being displayed, it takes you to the
  * first room it finds in your list
- *
  */
 int cli_remove_active_room(struct_client_info *cli, char *room_name)
 {
-    int i, ret;
+    int i;
     bool flag = false;
 
     for (i=0; i < _R_ROOM_MAX; ++i) {
@@ -183,7 +182,7 @@ int cli_remove_active_room(struct_client_info *cli, char *room_name)
         /* find a valid index to return. Race condition if doing it in first loop */
         for (i = 0; i < _R_ROOM_MAX; ++i) {
             if (cli->rooms[i] && cli->rooms[i]->room_name) {
-                irc_switch_current_room(cli, cli->rooms[i]->room_name);
+                cli_switch_current_room(cli, cli->rooms[i]->room_name);
                 return SUCCESS;
             }
         }
@@ -193,6 +192,31 @@ int cli_remove_active_room(struct_client_info *cli, char *room_name)
     }
     return flag ?  SUCCESS : FAILURE;
 } /* end serv_remove_active_room */
+
+void cli_switch_current_room(struct_client_info *cli_info, char *room_name)
+{
+    int i;
+    struct_room_info *current;
+
+    if (cli_switch_active_room(cli_info, room_name) == FAILURE) {
+        printf("notice: You were not in that room.\n");
+        return;
+    }
+
+    current = cli_info->rooms[cli_info->current_r];
+
+    
+    display_clear();
+
+    for (i=0; i < _H_STR_MAX; ++i) {
+        if (current->history[i])
+            printf("%s\n", current->history[i]);
+        else 
+            break;
+    }
+
+    printf("notice: Swapped to room %s\n", current->room_name);
+} /* end cli_switch_current_room */
 
 /*******************************************************************************
  *                      Handle Friends List
@@ -318,39 +342,4 @@ int cli_switch_active_room(struct_client_info *cli_info, char *room_name)
     }
     return FAILURE;
 } /* end cli_switch_active_room */
-
-
-#if 0
-/*******************************************************************************
- * Command: /b l
- ******************************************************************************/
-int cli_display_block(struct_client_info *client, char *name)
-{
-    return 0;
-} /* end block_enemy */
-
-/*******************************************************************************
- * Command: /b a
- ******************************************************************************/
-int cli_block_enemy(struct_client_info *client, char *name)
-{
-    return 0;
-} /* end block_enemy */
-
-/*******************************************************************************
- * Command: /b r
- ******************************************************************************/
-int cli_remove_block(struct_client_info *client, char *name)
-{
-    return 0;
-} /* end block_enemy */
-
-/*******************************************************************************
- * Command: /invite
- ******************************************************************************/
-int cli_inv_friend_to_room(struct_client_info *client, char *name)
-{
-    return 0;
-} /* end inv_friend_to_room */
-#endif
 /****** EOF *****/

@@ -14,7 +14,6 @@
 struct_serv_info* com_init_serv_info(void);
 struct_io_ring* com_init_io_ring(void);
 void com_free_serv_info(struct_serv_info *dest);
-void com_free_io_ring(struct_io_ring *dest);
 
 int init_client_comm(struct_serv_info *serv_info);
 ssize_t send_to_server(int sockfd, uint8_t *tx, size_t len, int flags);

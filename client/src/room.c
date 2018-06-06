@@ -46,16 +46,6 @@ void room_free_info(struct_room_info *dest)
     _room_free_info(dest);
 } /* end room_free_info() */
 
-/******************************************************************************* 
- * TODO: Encrypt the password, decrypt it here for comparison.
- *
- * Compares the password in current_room with the password passed in 
- ******************************************************************************/
-static int check_room_pw(struct_room_info *current_room, char *pw_in) 
-{
-    return 0;
-} /* end check_room_pw */
-
 int room_add_to_history(struct_room_info *room, char *msg) 
 {
     size_t len;

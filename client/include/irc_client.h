@@ -9,7 +9,6 @@
 
 #include "client.h"
 #include "comm.h" // holds struct_serv_info
-#include "debug.h"
 
 #define DISP_INSERT_NEWLINE 20
 
@@ -21,8 +20,6 @@
 typedef struct irc_info {
     struct_client_info *client;
     struct_serv_info   *serv_info;
-    struct_io_ring     *tx;
-    struct_io_ring     *rx;
 } struct_irc_info;
 
 /* initial allocation and free. Free will work with any allocation state */
@@ -37,11 +34,9 @@ void irc_logon_client(struct_irc_info *irc_info);
 char* irc_get_user_input(void);
 int irc_handle_user_input(struct_irc_info *irc_info, char *input);
 
-void irc_switch_current_room(struct_client_info *cli_info, char *room_name);
 
 /* Display Functions */
 void display_welcome(void);
-void display_clear(void);
 void display_room_welcome(char *room_name, int num_users);
 void display_new_room(char *room_name, int num_users);
 void display_active_rooms(struct_client_info *cli);

@@ -98,7 +98,7 @@ void irc_switch_current_room(struct_client_info *cli_info, char *room_name)
  ******************************************************************************/
 int irc_handle_user_input(struct_irc_info *irc_info, char *input)
 {
-    int ret, type, len, rlen;
+    int ret, type, len, rlen, i;
     char *cli_name = irc_info->client->name;
     char *room_name;
     room_name = irc_info->client->rooms[irc_info->client->current_r]->room_name;
@@ -190,13 +190,14 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
     ret = strncmp(input, ROOM_MSG, len-1);
     if (ret == 0) {
         if (input[len-1] == ' ') { 
-            /* find room name */
+            /* parse room length */
             for (rlen = len; input[rlen] != ' '; ++rlen) {
                 if (input[rlen] == '\0' || (rlen-len) > R_NAME_LEN_MAX)
                     return FAILURE;
             }
             ++rlen;
-
+            
+            /* aquire room_name string */
             room_name = CALLOC_ARRAY(char, rlen-len);
             if (!room_name)
                 errExit("irc_handle_user_input: Failed to calloc room_name.");
@@ -205,15 +206,28 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
             room_name[rlen-len-1] = '\0';
 
             /* make sure client is in the room */
+            for (i=0; i < R_ROOM_MAX; ++i) {
+                if (!irc_info->client->rooms[i])
+                    continue;
 
-            ret = com_send_chat_message(cli_name, room_name, input+rlen,
-                                        irc_info->serv_info);
-            free(room_name);
-            return ret;
-        }
+                ret = strncmp(irc_info->client->rooms[i]->room_name, room_name, 
+                              strlen(room_name) + 1);
+                if (ret == 0) {
+                    ret = com_send_chat_message(cli_name, room_name, input+rlen,
+                                                irc_info->serv_info);
+                    free(room_name);
+                    return ret;
+                } /* end if */
+            } /* end for */
+            
+            /* User was not in the room requesting to send the message */
+            printf("notice: You are not joined in that room.");
+            disp_input_prompt();
+        } /* end if (input[len-1] == ' ') */
         return FAILURE;
     }
-
+    
+    /* /show <room name>*/
     len = sizeof(ROOM_DISP);
     ret = strncmp(input, ROOM_DISP, len-1);
     if (ret == 0) {
@@ -614,36 +628,3 @@ void irc_client(void)
     irc_free_info(irc_info);
 } /* end irc_client() */
 /****** EOF ******/
-
-#if 0
-/* TODO: These might not get implemented due to time. Clean up final version. */
-static int find_bcmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "l ", 2);
-    if (ret == 0)
-        return RC_BL;
-
-    ret = strncmp(input, "a", 2);
-    if (ret == 0)
-        return RC_BA;
-
-    ret = strncmp(input, "r ", 2);
-    if (ret == 0)
-        return RC_BR;
-
-    return RC_ERR;
-} /* end find_bcmd */
-
-static int find_inv_cmd(char *input)
-{
-    int ret;
-
-    ret = strncmp(input, "inv ", 4);
-    if (ret == 0)
-        return RC_INV;
-
-    return RC_ERR;
-}
-#endif

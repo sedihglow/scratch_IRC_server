@@ -50,20 +50,6 @@ struct_cli_info** serv_add_client(struct_cli_info **new_cli,
         return old_list;
     }
 
-#if 0
-    if (!old_list) js
-        new_list = CALLOC(struct_cli_info*);
-        new_list[0] = *new_cli;
-        return new_list;
-    } else if (old_size == 0) {
-        /* size of zero implies *old_list is NULL */
-        FREE_ALL(old_list);
-        new_list = CALLOC(struct_cli_info*);
-        new_list[0] = *new_cli;
-        return new_list;
-    }
-#endif
-    
     new_list = CALLOC_ARRAY(struct_cli_info*, old_size+1);
 
     for (i=0; i < old_size; ++i)
@@ -103,7 +89,6 @@ void serv_free_client(struct_room_list *rooms, struct_cli_info *cli)
  *  returns a new list with the removal of the client with name.
  *
  *  sets errno to EINVAL if client name is not in the list
- *  TODO: Untested 
  ******************************************************************************/
 struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list, 
                                      size_t old_size, int sockfd)

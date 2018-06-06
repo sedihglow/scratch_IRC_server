@@ -45,7 +45,7 @@ void display_clear(void);
 void display_room_welcome(char *room_name, int num_users);
 void display_new_room(char *room_name, int num_users);
 
-/* threaded to recieve and update data */
+/* Called in thread to recieve and update data */
 void* irc_handle_server_requests(void *args);
 int irc_exec_client_response(struct_irc_info *irc_info, 
                              struct_serv_message *serv_msg);

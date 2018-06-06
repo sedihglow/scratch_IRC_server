@@ -313,7 +313,6 @@ int cli_switch_active_room(struct_client_info *cli_info, char *room_name)
             }
         }
     }
-
     return FAILURE;
 } /* end cli_switch_active_room */
 

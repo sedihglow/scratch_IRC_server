@@ -6,7 +6,6 @@
 
 #include "room.h"
 
-
 struct_room_state* room_init_state(void)
 {
     struct_room_state *init;

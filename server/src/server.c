@@ -35,7 +35,6 @@ void serv_free_room_list(struct_room_list *room_list)
  *  new_cli will be set to NULL at end after being placed into the new list.
  *
  *  sets errno to EINVAL if the passed new client is unallocated.
- *  TODO: Untested 
  ******************************************************************************/
 struct_cli_info** serv_add_client(struct_cli_info **new_cli, 
                                   struct_cli_info **old_list, size_t old_size)
@@ -137,7 +136,6 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
 
 /******************************************************************************* 
  * serv_find_client
- *
  *
  * Returns NULL if client is not in the list.
  * Returns pointer to found client struct on success

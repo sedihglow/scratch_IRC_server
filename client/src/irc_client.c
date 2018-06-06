@@ -171,7 +171,7 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         }
     }
     
-    /* /room ul */
+    /* /room ul <room name>, room name optional */
     len = sizeof(ROOM_USER_L);
     ret = strncmp(input, ROOM_USER_L, len-1);
     if (ret == 0) {
@@ -237,7 +237,15 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
         }
         return FAILURE;
     }
-    
+   
+    /* /room l */
+    len = sizeof(ROOM_L);
+    ret = strncmp(input, ROOM_L, len-1);
+    if (ret == 0) {
+        if(input[len-1] == '\0')
+            display_active_rooms(irc_info->client);
+        return SUCCESS;
+    }
 
     ret = strncmp(input, PRIV_MSG, sizeof(PRIV_MSG)-1);
     if (ret == 0) {
@@ -348,6 +356,21 @@ void display_welcome(void)
            "If your desired username is taken, re-enter an alternative.\n\n"
            );
 } /* end display_welcome */
+
+
+void display_active_rooms(struct_client_info *cli)
+{
+    int i;
+    
+    printf("--- Currently Active Rooms ----\n");
+    for (i=0; i < R_ROOM_MAX; ++i) {
+        printf("%s\n", cli->rooms[i]->room_name);
+    }
+    printf("\n");
+    disp_input_prompt();
+} /* end display_active_rooms */
+
+
 
 void irc_logon_client(struct_irc_info *irc_info)
 {
@@ -601,10 +624,9 @@ void irc_client(void)
     ret = pthread_create(&t_id, NULL, irc_handle_server_requests, (void*)irc_info);
     if (ret)
         errnumExit(ret, "irc_client: Failed to create recv thread.");
-
+    
+    disp_input_prompt();
     for ( ;; ) { 
-        printf(">> ");
-        fflush(stdout);
         input = irc_get_user_input();
 
         if (g_serv_crashed == true)
@@ -614,6 +636,7 @@ void irc_client(void)
 
         if (ret == FAILURE) {
             printf("- INVALID COMMAND -\n");
+            disp_input_prompt();
         } else if (ret == RC_EXIT /*|| g_serv_crashed == true */) {
             break;
         }
@@ -624,7 +647,7 @@ void irc_client(void)
     pthread_join(t_id, NULL); 
     free(input);
     /* shutdown open socket */
-    shutdown(irc_info->serv_info->sockfd, SHUT_RDWR);
+    close(irc_info->serv_info->sockfd);
     irc_free_info(irc_info);
 } /* end irc_client() */
 /****** EOF ******/

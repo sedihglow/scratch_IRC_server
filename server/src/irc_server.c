@@ -259,7 +259,7 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
     struct_cli_info **ret; 
     
-    shutdown(cli_info->sockfd, SHUT_RDWR);
+    close(cli_info->sockfd);
 
     /* remove fd from fd list, decrement totals */
     irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli_info->sockfd);
@@ -771,7 +771,11 @@ void irc_server(void)
     for (i=0; i < irc_info->num_clients; ++i)
         irc_shutdown_client(irc_info, irc_info->cli_list[i]);
 
+    /* shutdown server socket */
+    close(irc_info->serv_info->sockfd);
+
     /* free all the info. */
     irc_free_info(irc_info);
+
 } /* end irc_server */
 /******* EOF ********/

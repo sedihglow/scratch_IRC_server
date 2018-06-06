@@ -6,40 +6,10 @@
 
 #include "room.h"
 
-struct_room_state* room_init_state(void)
-{
-    struct_room_state *init;
-
-    init = CALLOC(struct_room_state);
-    if (!init) {
-        err_msg("room_init_state: calloc failure - struct_room_state");
-        return NULL;
-    }
-  
-    /***************************************************************************
-     * default initialization has no public/password set.
-     *
-     * TODO:
-     *      Might change this depending on implementation of shit.
-     **************************************************************************/
-    init->current_room = _room_init_info(true, NULL);
-    init->next_buff    = _room_init_info(true, NULL);
-    init->prev_buff    = _room_init_info(true, NULL);
-
-    return init;
-} /* end room_init_state() */
-
 struct_room_info*  room_init_info(void)
 {
     return _room_init_info(true, NULL);
 } /* end room_init_info */
-
-void room_free_state(struct_room_state *dest)
-{
-    _room_free_info(dest->current_room);
-    _room_free_info(dest->next_buff);
-    _room_free_info(dest->prev_buff);
-} /* end room_free_state() */
 
 void room_free_info(struct_room_info *dest)
 {

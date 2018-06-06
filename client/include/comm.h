@@ -12,7 +12,6 @@
 #define IO_BUFF  _COM_IO_BUFF
 
 struct_serv_info* com_init_serv_info(void);
-struct_io_ring* com_init_io_ring(void);
 void com_free_serv_info(struct_serv_info *dest);
 
 int init_client_comm(struct_serv_info *serv_info);
@@ -28,14 +27,12 @@ int com_send_join_message(char *cli_name, char *room_name,
                           struct_serv_info *serv_info);
 int com_send_leave_message(char *cli_name, char *room_name, 
                            struct_serv_info *serv_info);
-
 int com_send_logout_message(char *cli_name, struct_serv_info *serv_info);
 int com_send_exit_message(char *cli_name, struct_serv_info *serv_info);
-
 int com_get_logon_result(int fd);
-
 int com_send_room_users_message(char *cli_name, char *room_name, 
                         struct_serv_info *serv_info);
 
+/* parses message from the server to the client */
 struct_serv_message* com_parse_server_msg(uint8_t *input);
 #endif

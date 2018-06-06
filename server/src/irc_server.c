@@ -238,30 +238,11 @@ int irc_accept_new_cli(struct_irc_info *irc_info, struct_cli_message *cli_msg,
     /* let client know success */
     com_send_logon_result(cli->sockfd, LOGON_FAILURE);
 
-#if 0
-    /* remove fd from fd list, decrement totals */
-    irc_info->full_fd_list = irc_remove_fd_list(irc_info, cli->sockfd);
-
-    /* remove from client list. */
-    errno = 0;
-    irc_info->cli_list = serv_remove_client(NULL, irc_info->cli_list, 
-                                     irc_info->num_clients, cli->sockfd);
-    if (errno == EINVAL) {
-        return FAILURE;
-    }
-
-    --(irc_info->num_clients);
-    /* note you leave it open. */
-
-    printf("client FAILED to be accepted and is responded to\n");
-#endif
     return FAILURE;
 } /* end irc_accept_new_cli */
 
 int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 {
-    struct_cli_info **ret; 
-    
     close(cli_info->sockfd);
 
     /* remove fd from fd list, decrement totals */
@@ -286,7 +267,6 @@ int irc_shutdown_client(struct_irc_info *irc_info, struct_cli_info *cli_info)
 void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
 {
     unsigned int size = sizeof(struct sockaddr_in);
-    char rx[50] = {0}; /* first revieve should be 0 */
     struct_cli_info *cli_info;
 
     cli_info = CALLOC(struct_cli_info);
@@ -401,7 +381,6 @@ int irc_cli_msg_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
  ******************************************************************************/
 int irc_cli_join_cmd(struct_irc_info *irc_info, struct_cli_message *cli_msg)
 {
-    int ret, i;
     int num_users;
     struct_cli_info *cli;
 
@@ -538,10 +517,6 @@ int irc_cli_list_room_users(struct_irc_info *irc_info,
  *
  * Returns SUCCESS if operation happened smoothly.
  * Returns FAILURE if anything bad happens.
- *
- * TODO: Will set ERRNO to identify different errors probably. Or hand made 
- *       error codes using errno as a vessel. If time to specify to client by
- *       deadline.
  ******************************************************************************/
 int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info) 
 {
@@ -556,10 +531,6 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
     }
 
     /* Parse message */
-    /* TODO: Currently if it crashes before RC_LOGON, seg fault due to name. 
-     *
-     * I Think this is fixed. Delete after solving multiple same name behavior.
-     */
     cli_msg = com_parse_cli_message(rx);
     if (!cli_msg) {
         /* drop client and move on. likely crashed. */
@@ -621,42 +592,7 @@ int irc_handle_cli(struct_irc_info *irc_info, struct_cli_info *cli_info)
             _com_free_cli_message(cli_msg);
             return FAILURE;
         }
-
-    case RC_R_MSG:
-    /* Send a message to a particular room.
-     * msg format: cli_name | RC_R_MSG | room name | msg
-     */
-
     break;
-
-
-    case RC_VOID:
-    /* remove user from all rooms and place them in the void. */
-
-    /* let clients who shared a room know this user no longer exists in the 
-     * room.
-     *
-     * Same function that would be used to leave a room.
-     */
-
-    break;
-
-    case RC_WHO:
-    /* from /who <name>
-     * msg format: cli_name | RC_WHO | name to check 
-     */
-
-    /* Reply to client with a true or false statment.
-     * msg format: RC_WHO | name to check | online or offline.
-     */
-
-    break;
-
-    case RC_PM: // if time should be quick when time comes.
-    break;
-    case RC_PR: // if time should be quick
-    break;
-
     default:
         errnum_msg(EINVAL, "Invalid type of msg");
         return FAILURE;
@@ -694,8 +630,6 @@ int irc_check_direct_input(void)
 
 void irc_server(void)
 {
-    char rx[IO_BUFF] = {'\0'}; /* TODO: likely temp buffer during dev. */
-
     /* irc_info w/ pointers for faster access into irc_info */
     struct_irc_info  *irc_info;
     struct_serv_info *irc_serv_info; /* for better access to irc_info member */
@@ -777,6 +711,5 @@ void irc_server(void)
 
     /* free all the info. */
     irc_free_info(irc_info);
-
 } /* end irc_server */
 /******* EOF ********/

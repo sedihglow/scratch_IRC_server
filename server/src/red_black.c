@@ -311,9 +311,11 @@ uint32_t remove_first(rbTree *tree, char* toRemove)/*#{{{*/
 } /* end remove_first #}}} */
 
 /* OPT NOTE: this function starts from root each time it searchs for the item
-             to be removed. Much of the tree changes with removal, therefore
-             this may be a required lag as appose to doing it in 1 search. 
-             More analysis is required for me to be 100% certin */
+ *           to be removed. Much of the tree changes with removal, therefore
+ *           this may be a required lag as appose to doing it in 1 search. 
+ *             
+ *           Just mentioning it off the top of my head. Might be fine.
+ */
 uint32_t remove_each(rbTree *tree, char *toRemove)/*#{{{*/
 {   
     uint32_t removals = 0;

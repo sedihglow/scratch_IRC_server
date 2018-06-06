@@ -34,7 +34,7 @@ static int find_fcmd(char *input)
     if (ret == 0)
         return RC_FR;
 
-    return RC_ERR;
+    return FAILURE;
 } /* end find_fcmd */
 
 /*******************************************************************************

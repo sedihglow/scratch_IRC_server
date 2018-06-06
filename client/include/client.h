@@ -10,7 +10,6 @@
 #include "room.h"
 #include "irc_comm.h" /* Only for the RC definitions. Dont like it tho. */
 
-
 /******************************************************************************
  *                      Friend List Definitions
  ******************************************************************************/

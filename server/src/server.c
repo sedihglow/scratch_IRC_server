@@ -93,7 +93,6 @@ struct_cli_info** serv_remove_client(char *name, struct_cli_info **old_list,
                                      size_t old_size, int sockfd)
 {
     unsigned int i, j;
-    int ret;
     struct_cli_info **new_list = NULL;
     struct_cli_info *remove = NULL;
 

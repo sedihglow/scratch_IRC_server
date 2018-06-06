@@ -99,7 +99,7 @@ struct_cli_message* com_parse_cli_message(uint8_t *rx)
 {
     struct_cli_message *new_msg;
     int i, j;
-    size_t len; 
+    int len; 
     char tmp[_COM_IO_BUFF] = {'\0'};
 
     if (rx[0] == '\0') {
@@ -163,7 +163,6 @@ int com_send_logon_result(int fd, uint8_t payload)
     return SUCCESS;
 } /* end com_send_logon_result */
 
-
 static int com_send_join_leave_result(int fd, char *room_name, uint8_t num_users,
                                       uint8_t res, uint8_t type);
 
@@ -183,11 +182,9 @@ static int com_send_join_leave_result(int fd, char *room_name, uint8_t num_users
         tx[i] = RC_JOIN;
         ++i;
         tx[i] = num_users;
-    }
-    else if (type == RC_LEAVE) {
+    } else if (type == RC_LEAVE) {
         tx[i] = RC_LEAVE;
-    }
-    else {
+    } else {
         return FAILURE; /* just catches programming errors. */
     }
     ++i;

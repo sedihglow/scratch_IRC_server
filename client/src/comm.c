@@ -12,11 +12,6 @@ struct_serv_info* com_init_serv_info(void)
     return _com_init_serv_info();
 }/* end com_init_serv_info */
 
-struct_io_ring* com_init_io_ring(void) 
-{
-    return _com_init_io_ring();
-} /* end com_init_io_buff */
-
 
 void com_free_serv_info(struct_serv_info *dest)
 {
@@ -56,10 +51,8 @@ static int connect_to_server(struct_serv_info *serv_info)
 } /* end connect to server */
 
 /******************************************************************************
- * TODO:
+ * TODO: Memory not cleaned up on exit. 
  *
- * Memory not cleaned up on exit. 
- 192.168.3.133*
  * Replace errExit functions and clean up memory in irc_server before killing
  * program
  ******************************************************************************/
@@ -89,7 +82,6 @@ int init_client_comm(struct_serv_info *serv_info)
     addr_tmp->sin_family = serv_info->domain;
     addr_tmp->sin_addr.s_addr = serv_info->addr;
     addr_tmp->sin_port = serv_info->port;
-
 
     /* connect_to_server() sets serv_info->sockfd */
     if(connect_to_server(serv_info) == FAILURE)

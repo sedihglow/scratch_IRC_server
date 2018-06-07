@@ -19,9 +19,6 @@
 #define P_RD 0 // value for a pipe read fd in pipefd[2]
 #define P_WR 1 // value for a pip write fd in pipefd[2]
 
-#ifndef __USE_MISC
-    #define __USE_MISC 1 // gives access to random and misc stdlib functions
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,6 +26,7 @@
 #include <sys/wait.h>
 #include <sys/times.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +36,10 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <pthread.h>
+
+#ifndef __USE_MISC
+#define __USE_MISC 1 // provide usleep 
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -58,6 +60,13 @@
 #define CALLOC(type)             ((type*) calloc(1, sizeof(type)))
 #define CALLOC_VOID(nmemb, size) ((void*) calloc(nmemb, size))
 #define CALLOC_ARRAY(type, num)  ((type*) calloc(num, sizeof(type)))
+
+
+#define my_strdup(dest, src, len)                                              \
+{                                                                              \
+    dest = CALLOC_ARRAY(char, len);                                            \
+    if (dest) memcpy(dest, src, len);                                          \
+} /* end my_strdup */
 
 /*******************************************************************************  
  * buff is set to '\0' for nByte before read occures. 
@@ -117,7 +126,7 @@
 } /* end PARSE_BUFF */
 
 /* Clears STDIN using read() */
-#define RD_CLR_STDIN(){                                                        \
+#define RD_CLR_STDIN() {                                                        \
     char __ch = {'\0'};                                                        \
     while(read(STDIN_FILENO, (void*)&__ch, 1) && __ch != '\n' && __ch != EOF); \
 } /* end RD_CLR_STDIN */
@@ -138,19 +147,23 @@
  *
  * -Type is the type of pointer used. (VA_ARGS could be void for example.). 
  * -... is a variable argument list.
+ *
+ * NOTE: Modified to only be used for free
  ******************************************************************************/
 #define APPLY_FUNCT(type, funct, ...)                                          \
-{                                                                              \
+{                                                                             \
     void *stopper = (int[]){0};                                                \
     type **apply_list = (type*[]){__VA_ARGS__, stopper};                       \
     int __i_;                                                                  \
                                                                                \
-    for(__i_ = 0; apply_list[__i_] != stopper; ++__i_){                        \
-        (funct)(apply_list[__i_]);}                                            \
+    for (__i_ = 0; apply_list[__i_] != stopper; ++__i_) {                      \
+        if (apply_list[__i_])                                                  \
+            (funct)(apply_list[__i_]);                                          \
+    }                                                                          \
 } /* end apply_funct */
     
 /* Apply free to every pointer given in the argument list using apply_funct() */
-#define FREE_ALL(...)   APPLY_FUNCT(void, free, __VA_ARGS__)
+#define FREE_ALL(...) APPLY_FUNCT(void, free, __VA_ARGS__)
 
 /******************************************************************************* 
  * Subtract two timespec structures and place them in a resulting timespec
@@ -174,4 +187,12 @@
     }                                                                          \
 } /* end TIMESPEC_SUB */
 
+static inline void display_clear(void)
+{
+    int i;
+    for (i=0; i < 10; ++i) {
+        printf("\n\n\n\n\n\n\n\n\n\n");
+    }
+    fflush(stdout);
+} /* end display_clear */
 #endif /************ EOF **************/

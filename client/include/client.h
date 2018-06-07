@@ -8,76 +8,66 @@
 #define _CLIENT_H_
 
 #include "room.h"
+#include "irc_comm.h" /* Only for the RC definitions. Dont like it tho. */
 
 /******************************************************************************
  *                      Friend List Definitions
  ******************************************************************************/
-#define F_A      "/f a"       // /f a <name>      : Add name to f list
-#define F_ADD    "/f add"     // /f add <name>    : Same as above
-#define F_L      "/f l"       // /f l             : Show friends list
-#define F_LIST   "/f list"    // /f list          : Same as above
-#define F_R      "/f r"       // /f r <name>      : Remove from friends list
-#define F_REM    "/f remove"  // /f remove <name> : Same as above
-
-#define B_L      "/b l"       //                  : Who you blocked  TODO: limit list size for security
-#define B_LIST   "/b list"    //                  : Same as above
-#define B_A      "/b a"       // /b a <name>      : Add someone to block list
-#define B_ADD    "/b add"     // /b add <name>    : same as above
-#define B_R      "/b r"       // /b r <name>      : Remove from block list
-#define B_REM    "/b remove"  // /b remove <name> : same as above
-#define WHO      "/who"       // /who <name>      : Search if a user exists
+#define F_A      "/f a "       // /f a <name>      : Add name to f list
+#define F_L      "/f l "       // /f l             : Show friends list
+#define F_R      "/f r "       // /f r <name>      : Remove from friends list
 
 /******************************************************************************
  *                      Chat Room Definitions
  ******************************************************************************/
-#define JOIN     "/join"         // /join <channel>  : Join dat channel
-#define EXIT_IRC "/exit"         // /exit            : Get the fuck out
-#define VOID     "/leave"        // /leave           : Go to the void
-#define LOG_OUT  "/logout"       //                  : Back to login screen.
-#define INVITE   "/invite"       // /invite <name>   : Invite into current channel
-#define INV      "/inv"          // /inv <name>      : Same as above
-#define BLOCK    "/block"        // /block <name>    : Block the fucker
-#define L_ROOM   "/room l"       // /channel l       : List all public channels
-#define LST_ROOM "/room list"    //                  : Same as above
-
-
-#define PRIV_MSG "/pm"    // /pm <name> "msg" : Send the private shit
-#define PRIV_REP "/r"     // /r "msg"         : Reply to previos PM 
-
-/******************************************************************************
- *                      Debug Definitions TODO: Maybe? move to a test harness
- ******************************************************************************/
-#define D_PRINT   "/d yp"      // Turn on debug print statments, sent by pm?
-#define D_NOPRINT "/d np"      // Turn off debug print statments
-#define D_NETWORK "/d network" // Print any relevent network/comm data
-#define D_RLIST   "/d rl"      // Print all existing rooms (even private)
-#define D_FLIST   "/d fl"      // /d fl <name> : Print users friend list.
-#define D_BLIST   "/d bl"      // /d bl <name> : Print users block list
-#define D_FUNCT   "/d funct"   // /d funct <funct> <args...> : exec funct
+#define JOIN        "/join"    // /join <channel>  : Join dat channel
+#define EXIT_IRC    "/exit"    // /exit            : Get the fuck out
+#define LEAVE       "/leave"   // /leave <channel> : leave a channel
+#define ROOM_L      "/room l"  // /channel l       : List all active
+#define ROOM_MSG    "/msg"     // /msg <room> <msg>: send msg to room.
+#define ROOM_DISP   "/show"    // /show <room name>: change room display
+#define ROOM_USER_L "/room ul" // /room ul         : List members of room
+#define LONGEST_CMD_LEN (sizeof(ROOM_USER_L))
 
 /******************************************************************************
  *                      Non Command Definitions
  ******************************************************************************/
 #define IO_STR_LEN_MAX H_STR_LEN_MAX // definition found in irc_room.h
-#define IO_MAX 225 // max characters a user can input for a message
+#define F_MAX     30    // 30 friends max. Too popular too bad. 
+
+#define CLI_NAME_MAX _NAME_SIZE_MAX 
+
+#define CLI_EXTRA_CHAR_BUFF 10
+#define CLI_R_HIST_LEN (_H_STR_LEN_MAX + CLI_NAME_MAX + CLI_EXTRA_CHAR_BUFF)
 
 typedef struct friend_list {
-    char **flist;
+    char *list[F_MAX];
+    int fcount;
 } struct_flist;
 
-
 typedef struct client_info {
-    struct_room_state *room;
+    struct_room_info *rooms[R_ROOM_MAX];
+    int current_r;            /* index of current room */
+    int room_count;           /* number of rooms the client is in. */
     char *name;
-    struct_flist flist;
+    struct_flist *f_list;
 } struct_client_info;
 
-int block_enemy(struct_client_info *client, char *name);
-int inv_friend_to_room(struct_client_info *client, char *name);
-int display_friends(struct_client_info *client);
-int remove_friend(struct_client_info *client);
-int add_friend(struct_client_info *client);
-int request_room(struct_client_info *client);
+/* allocation */
+struct_client_info* cli_init_info(void);
+void cli_free_info(struct_client_info *dest);
 
+/* Sets the client information for a first successful server connection */
+int cli_set_new_cli_info(struct_client_info *cli_info, char *name);
+
+/* client handling functions */
+int cli_handle_flist(int cmd_type, struct_client_info *client, char *fname);
+int cli_add_active_room(struct_client_info *cli, char *room_name);
+int cli_remove_active_room(struct_client_info *cli, char *room_name);
+int cli_add_to_room_history(struct_client_info *cli, char *room_name,  
+                            char *msg, bool disp);
+void cli_goto_default_room(struct_client_info *cli_info);
+int cli_switch_active_room(struct_client_info *cli_info, char *room_name);
+void cli_switch_current_room(struct_client_info *cli_info, char *room_name);
 #endif
 /****** EOF ******/

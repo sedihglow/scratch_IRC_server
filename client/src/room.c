@@ -6,18 +6,37 @@
 
 #include "room.h"
 
-/******************************************************************************* 
- * TODO: Encrypt the password, decrypt it here for comparison.
- *
- * Compares the password in current_room with the password passed in 
- ******************************************************************************/
-static int check_room_pw(struct_room_info *current_room, char *pw_in) 
+struct_room_info*  room_init_info(void)
 {
-    return 0;
-}
+    return _room_init_info(true, NULL);
+} /* end room_init_info */
 
-int switch_to_room(struct_room_state *room_state, struct_room_info *new_room) 
+void room_free_info(struct_room_info *dest)
 {
-    return 0;
-}
+    _room_free_info(dest);
+} /* end room_free_info() */
+
+int room_add_to_history(struct_room_info *room, char *msg) 
+{
+    size_t len;
+
+    /* add new message to end of the list */
+    len = strlen(msg) + 1; 
+    if (room->history[room->hist_end] != NULL) {
+        free(room->history[room->hist_end]);
+        room->history[room->hist_end] = NULL;
+
+        room->hist_start = (room->hist_start + 1) % _H_STR_MAX;
+    }
+    
+    /* allocate to appropriate size */
+    room->history[room->hist_end] = CALLOC_ARRAY(char, len);
+
+    strncpy(room->history[room->hist_end], msg, len);
+
+    /* increment pointer ring */
+    room->hist_end = (room->hist_end + 1) % _H_STR_MAX;
+    
+    return SUCCESS;
+} /* end room_add_to_history */
 /**** EOF ****/

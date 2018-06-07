@@ -27,14 +27,6 @@ run client:
 run server:
 	+$(MAKE) -C ./server run
 
-.PHONY: debug client
-debug client:
-	+$(MAKE) -C ./client debug
-
-.PHONY: debug server
-debug server:
-	+$(MAKE) -C ./server debug
-
 .PHONY: clean
 clean:
 	+$(MAKE) -C ./client clean

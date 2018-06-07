@@ -41,35 +41,9 @@
                                     : (grand) -> child[LEFT])                  \
                                 : NULL) /* else NULL */
 
-/* node the tree contains */
-
-/****************************************************************************** 
- * TODO: Each node needs to contain the room data. Replace the data pointer
- *       with either explicitly room data, or with a void pointer.
- *
- *       I remember big issues using hte void pointer tho... :/
- *
- *       So maybe say fuck it for this assignment and just do it not as legit
- *
- *       with the red black tree not as abstract.
- *          
- *      Maybe rephrase this to-do and keep it there for future reference that
- *      i will probably never get to.
- *
- *     
- *
- *
- *      TODO: 
- *              - Anything returning data
- *              - Anything accepting data to add.
- *              - May need to have it just add an updated room instead of
- *                passing values that are just to go into the room like
- *                history and bullshit.
- ******************************************************************************/
-
-
 /* TODO: Why did i think it was okay to use return 1 for success? D: */
 
+/* node the tree contains */
 typedef struct RBnode
 {
     struct_room_info *room;    /* pointer to room information in node */
@@ -113,10 +87,6 @@ uint32_t data_count(rbTree *tree, const char *room_name); /* count_data wrapper 
 
 /* finds the first piece of data and returns the node's address */
 
-/*******************************************************************************
- * TODO: This is the retrieve function, It should not return a node anymore,
- *       it should just return the room information struct
- ******************************************************************************/
 struct_room_info* find_match(rbTree *tree, char *toFind);
 
 /* return the total ammount of nodes in the rbTree */

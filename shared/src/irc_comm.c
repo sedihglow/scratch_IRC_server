@@ -40,6 +40,4 @@ void _com_free_serv_message(struct_serv_message *rem)
 {
     FREE_ALL(rem->msg, rem);
 } /* end _com_free_serv_message */
-
-
 /*** EOF ***/

@@ -296,7 +296,7 @@ void irc_take_new_connection(int *nfds, struct_irc_info *irc_info)
 } /* irc_take_new_connection */
 
 /*
- * Incoming client msg format: name | RC_MSG | current room | input 
+ * Incoming client msg format: name | RC_MSG | room | input 
  * Response to client msg format : RC_MSG | client sending | room name | msg 
  *
  * TODO: If time, make a special response for failures instead of ignoring them
@@ -496,18 +496,18 @@ int irc_cli_list_room_users(struct_irc_info *irc_info,
     rooms = irc_info->rooms;
     room_info = room_find(&(rooms->rooms), cli_msg->msg);
     if (!room_info) {
-        com_send_room_user_messsage(cli->sockfd, NULL);
+        com_send_room_user_message(cli->sockfd, NULL);
         return FAILURE;
     }
 
     for (i=0; i < _R_USR_MAX; ++i) {
         if (room_info->room_users[i]) {
-            com_send_room_user_messsage(cli->sockfd, room_info->room_users[i]);
+            com_send_room_user_message(cli->sockfd, room_info->room_users[i]);
             usleep(1);
         }
     }
 
-    return com_send_room_user_messsage(cli->sockfd, NULL);
+    return com_send_room_user_message(cli->sockfd, NULL);
 } /* end irc_cli_list_room_users */
 
 /*******************************************************************************

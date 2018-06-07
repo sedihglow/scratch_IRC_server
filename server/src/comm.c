@@ -263,7 +263,7 @@ void com_send_exit_message(int fd)
  * If user_name is null, format: RC_RUL | \r
  * else format : RC_RUL | user name | \r
  */
-int com_send_room_user_messsage(int fd, char *user_name)
+int com_send_room_user_message(int fd, char *user_name)
 {
     uint8_t tx[IO_BUFF] = {'\0'};
     int len, i;

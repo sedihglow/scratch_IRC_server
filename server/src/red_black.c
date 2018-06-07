@@ -310,25 +310,6 @@ uint32_t remove_first(rbTree *tree, char* toRemove)/*#{{{*/
     return 0;
 } /* end remove_first #}}} */
 
-/* OPT NOTE: this function starts from root each time it searchs for the item
- *           to be removed. Much of the tree changes with removal, therefore
- *           this may be a required lag as appose to doing it in 1 search. 
- *             
- *           Just mentioning it off the top of my head. Might be fine.
- */
-uint32_t remove_each(rbTree *tree, char *toRemove)/*#{{{*/
-{   
-    uint32_t removals = 0;
-
-    assert(tree != NULL);
-    
-    /* while something gets removed, removes all instances of toRemove */
-    while(remove_first(tree, toRemove))
-          ++removals;
-
-    return removals;
-} /* end remove_each #}}} */
-
 void remove_all(rbTree *tree)/*#{{{*/
 {
     if(!tree && !tree -> root)

@@ -12,7 +12,6 @@ static volatile bool g_serv_crashed = false;
  *                          Static Functions
  ******************************************************************************/
 
-
 /*******************************************************************************
  * TODO: NOTE: Aware of magic numbrs and redundant compares copied into other
  *             Also the magic strings.
@@ -206,8 +205,6 @@ int irc_handle_user_input(struct_irc_info *irc_info, char *input)
                                  irc_info->serv_info);
 } /* end irc_handle_user_input */
 
-
-
 /******************************************************************************
  * Allocate all members and sub-members of struct to_init.
  *
@@ -238,7 +235,7 @@ void irc_free_info(struct_irc_info *dest)
 } /* end irc_free_info() */
 
 /*******************************************************************************
- * TODO: I dont like how this works with the buffer sizes n such. *shrug*
+ * Obtains input from user and return result.
  ******************************************************************************/
 char* irc_get_user_input(void)
 {

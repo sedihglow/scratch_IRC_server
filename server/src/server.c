@@ -148,12 +148,11 @@ struct_cli_info* serv_find_client(char *find, int fd, struct_cli_info **cli_list
         if (cli_list[i]->name) {
             if (strcmp(cli_list[i]->name, find) == 0)
                 return cli_list[i];
-        } else if (cli_list[i]->sockfd == fd) {
-            return cli_list[i];
         }
     }
     
-    return NULL;
+    /* name was not found, find based on file descriptor */
+    return serv_find_fd_client(fd, cli_list, size);
 } /* end serv_find_client */
 
 
@@ -216,5 +215,4 @@ struct_cli_info* serv_find_fd_client(int fd, struct_cli_info **cli_list,
 
     return NULL;
 } /* end serv_find_fd_client */
-
 /******** EOF *********/

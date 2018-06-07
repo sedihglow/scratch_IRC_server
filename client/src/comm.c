@@ -146,6 +146,7 @@ int com_get_logon_result(int fd)
     return SUCCESS;
 } /* end com_get_logon_message */
 
+/* client to server format : cli name | RC_MSG | room name | message */
 int com_send_chat_message(char *cli_name, char *room_name, char *msg, 
                           struct_serv_info *serv_info)
 {
@@ -159,16 +160,19 @@ int com_send_chat_message(char *cli_name, char *room_name, char *msg,
     tx = CALLOC_ARRAY(uint8_t, tx_len);
     if (!tx)
         errExit("Failed to allocate TX, download more ram.");
-   
+  
+    /* fill in client name */
     i = 0;
     strncpy((char*)(tx+i), cli_name, name_len);
     i += name_len;
     tx[i] = RC_MSG;
     ++i;
-    
+   
+    /* fill in room name */
     strncpy((char*)(tx+i), room_name, room_len);
     i += room_len;
 
+    /* fill in message */
     strncpy((char*)(tx+i), msg, msg_len);
     i += msg_len;
     tx[i] = '\r';
@@ -276,6 +280,9 @@ static int com_logout_exit_send(char *cli_name, struct_serv_info *serv_info,
     return SUCCESS;
 } /* end com_logout_exit_send */
 
+/* 
+ * Client to server format: Client name | RC_EXIT | \r 
+ */
 int com_send_exit_message(char *cli_name, struct_serv_info *serv_info)
 {
     return com_logout_exit_send(cli_name, serv_info, RC_EXIT);

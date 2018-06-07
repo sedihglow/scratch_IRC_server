@@ -10,12 +10,7 @@
 
 #include "utility_sys.h"
 
-/******************************************************************************* 
- * TODO: Client might not be the one checking this since multiple clients can 
- *       try to connet at once. Server needs to let the client know there is 
- *       no room.
- ******************************************************************************/
-#define _R_USR_MAX      100 // TODO: See todo above ;)
+#define _R_USR_MAX      100 
 #define _H_STR_MAX      500 // 500 string history.
 #define _H_STR_LEN_MAX  255 // for comparison before additional allocation
 #define _R_NAME_LEN_MAX 21  // room name max with '\0'
@@ -29,9 +24,9 @@ typedef struct room_info {
     bool pub_flag;       // is this room public or not?
     char *password;      // if not public. Otherwise dont allocate
     char **room_users;   // Reallocates in chunks.
-    uint32_t num_users;  // TODO: Max num users per channel?
+    uint32_t num_users;
     size_t max_name_len; // Given in init
-    char **history;      // Ring buffer.
+    char **history;      // Ring buffer of room history
     int hist_start;
     int hist_end;
 } struct_room_info;

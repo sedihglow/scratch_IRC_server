@@ -15,7 +15,7 @@
 #define NO_FLAGS 0  /* used for functions where no flag argument is used. */
 
 /* Server connectivity information */
-#define _COM_SERV_ADDR   "10.0.0.169"
+#define _COM_SERV_ADDR   "10.200.248.135"
 #define _COM_SERV_LEN    sizeof(_COM_SERV_ADDR)
 #define _COM_SERV_PORT   50059 /* port listening on server */
 #define _COM_NET_DOMAIN  AF_INET        /* network domain we are using. IPV4 */
@@ -28,7 +28,6 @@
 
 /******************************************************************************
  *                      Command Code Definition
- *                  TODO: Not all implemented, was idealism.
  ******************************************************************************/
 #define RC_FA     0x1
 #define RC_FL     0x2
@@ -76,6 +75,7 @@ typedef struct parsed_serv_message {
 
 struct_serv_info* _com_init_serv_info(void);
 void _com_free_serv_info(struct_serv_info *dest);
+
 void _com_free_cli_message(struct_cli_message *rem);
 void _com_free_serv_message(struct_serv_message *rem);
 
@@ -119,6 +119,7 @@ static inline ssize_t socket_receive(int sockfd, uint8_t *rx,
         err_msg("socket_recieve: recv() failed");
         return FAILURE;
     } 
+
     remaining -= received;
     rx        += received;
     
